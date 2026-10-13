@@ -80,6 +80,10 @@ new = ("sample=function(input,o){o=o||{};var msgs=input.slice(2).map(function(m)
        ".catch(function(e){if(e&&e.name==='AbortError')throw {code:'cancelled',text:''};throw e})};")
 s = replace_once(s, old, new, 'Áurea')
 
+# 4b. mapa do rodapé: fica sempre a arte aprovada (com "Abrir no Google Maps" e "Traçar rota");
+#     o iframe do Google não é injetado por cima dela
+s = replace_once(s, "if(!h||/claude|anthropic|localhost|usercontent/.test(h))return;", "return;", 'mapa')
+
 # 5. filme: caminho absoluto (o documento é servido em /)
 s = replace_once(s, "img.src='film/'+kind", "img.src='/film/'+kind", 'filme')
 

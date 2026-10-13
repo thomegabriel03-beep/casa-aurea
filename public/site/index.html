@@ -2930,7 +2930,7 @@ window.__IMG={"duo":"/site/img/d5350275234539bb.webp","cat_mesas":"/site/img/e3e
   })();
 
   (function(){var m=document.getElementById('f2map');if(!m)return;var h=location.hostname;
-    if(!h||/claude|anthropic|localhost|usercontent/.test(h))return; /* prévia: arte própria; no domínio do cliente, mapa do Google */
+    return; /* prévia: arte própria; no domínio do cliente, mapa do Google */
     var f=document.createElement('iframe');f.loading='lazy';f.title='Mapa: Casa Áurea, Av. Valério Gomes, 42, Tijucas';f.referrerPolicy='no-referrer-when-downgrade';f.src=m.getAttribute('data-embed').replace(/&amp;/g,'&');m.insertBefore(f,m.firstChild.nextSibling);
     var hit=m.querySelector('.f2-map-hit');if(hit)hit.remove()})();
 
