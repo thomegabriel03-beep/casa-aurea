@@ -1,0 +1,37 @@
+{
+  "name": "casa-aurea",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "db:types": "supabase gen types typescript --linked > src/types/supabase.ts",
+    "seed:natal": "node scripts/seed-natal-media.mjs",
+    "import:csv": "node scripts/import-catalog.mjs",
+    "validate": "node scripts/validate-mission1.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.57.0",
+    "next": "^15.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4.1.13",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "^15.5.0",
+    "tailwindcss": "^4.1.13",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6"
+  }
+}

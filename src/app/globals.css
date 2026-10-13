@@ -1,0 +1,215 @@
+@import "tailwindcss";
+
+/* ==========================================================
+   CASA ÁUREA — Design system
+   A proporção áurea (φ ≈ 1.618) é a regra estrutural da marca:
+   divisões de grid 5/8 (≈ 0.618), escala tipográfica e espaçamentos
+   seguem a sequência de Fibonacci (8 · 13 · 21 · 34 · 55 · 89 · 144).
+   ========================================================== */
+
+@theme inline {
+  /* Paleta provisória — substituir pela paleta oficial quando recebida */
+  --color-limestone: #f4efe8; /* papel marfim (aprovado) */
+  --color-linen: #ebe3d8;     /* superfícies secundárias */
+  --color-sand: #dccfbd;      /* linhas, divisões, placeholders */
+  --color-taupe: #6f6355;     /* texto secundário (AA sobre marfim) */
+  --color-walnut: #0f1628;    /* seções escuras: azul-noite oficial */
+  --color-ink: #1d2136;       /* texto principal */
+  --color-bronze: #a8804f;    /* uso mínimo: fios e detalhes */
+  --color-bronze-light: #cfae82;
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --font-serif: var(--font-display), "Bodoni 72", Didot, Georgia, serif;
+  --font-brand: var(--font-wordmark), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-text), "Futura", "Helvetica Neue", Arial, sans-serif;
+
+  --ease-quiet: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-door: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background: var(--color-limestone);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 1.0625rem; /* 17px */
+    line-height: 1.65;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--color-sand); color: var(--color-ink); }
+  :focus-visible {
+    outline: 2px solid var(--color-bronze);
+    outline-offset: 3px;
+  }
+  [id] { scroll-margin-top: 5.5rem; }
+  dialog::backdrop {
+    background: rgb(35 30 26 / 0.55);
+    backdrop-filter: blur(6px);
+  }
+}
+
+@layer components {
+  /* Grid & espaçamento ------------------------------------ */
+  .wrap {
+    width: 100%;
+    max-width: 1560px;
+    margin-inline: auto;
+    padding-inline: clamp(1.3125rem, 5vw, 5.5rem); /* 21 → 88 */
+  }
+  .section { padding-block: clamp(5.5rem, 11vw, 9rem); } /* 89 → 144 */
+
+  /* Hierarquia tipográfica (Fibonacci: 13 · 17 · 21 · 34 · 55 · 89) */
+  .t-display {
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: clamp(2.625rem, 7.4vw, 5.5625rem);
+    line-height: 1.02;
+    letter-spacing: -0.022em;
+    text-wrap: balance;
+  }
+  .t-h2 {
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: clamp(2.125rem, 4.4vw, 3.4375rem);
+    line-height: 1.08;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  .t-h3 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: clamp(1.5rem, 2.2vw, 2.125rem);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+  .t-lead {
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: clamp(1.1875rem, 1.6vw, 1.3125rem);
+    line-height: 1.6;
+  }
+  .t-body { font-size: 1.0625rem; line-height: 1.7; }
+  .t-caption {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+    color: var(--color-taupe);
+  }
+  .measure { max-width: 34em; }
+
+  /* Fio de seção: marca a abertura de cada capítulo, com o nome dele */
+  .chapter {
+    display: flex;
+    align-items: center;
+    gap: 0.8125rem;
+    font-size: 0.8125rem;
+    letter-spacing: 0.02em;
+    color: var(--color-taupe);
+  }
+  .chapter::before {
+    content: "";
+    width: 2.125rem;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.6;
+  }
+
+  /* Ações --------------------------------------------------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3.25rem;
+    padding: 0 1.75rem;
+    border-radius: 2px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition: background-color 0.4s var(--ease-quiet), color 0.4s var(--ease-quiet), border-color 0.4s var(--ease-quiet);
+  }
+  .btn-solid { background: var(--color-ink); color: var(--color-limestone); }
+  .btn-solid:hover { background: var(--color-walnut); }
+  .btn-light { background: var(--color-limestone); color: var(--color-ink); }
+  .btn-light:hover { background: var(--color-linen); }
+  .btn-ghost { border: 1px solid currentColor; }
+  .btn-ghost:hover { background: rgb(255 255 255 / 0.08); }
+
+  .link-line {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 0.2rem;
+  }
+  .link-line::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+    transform-origin: left;
+    transform: scaleX(0.35);
+    transition: transform 0.6s var(--ease-quiet);
+  }
+  .link-line:hover::after, .link-line:focus-visible::after { transform: scaleX(1); }
+
+  /* Placeholder de fotografia ------------------------------
+     Um plano de luz cortado na proporção áurea (38.2%),
+     como sol entrando por uma janela. Some ao receber a foto. */
+  .ph { position: relative; overflow: hidden; }
+  .ph::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(112deg, rgb(255 255 255 / 0.16) 0 38.2%, transparent 38.2%),
+      linear-gradient(180deg, transparent 61.8%, rgb(0 0 0 / 0.08) 61.8%);
+  }
+  .ph-limestone { background: #dcd5ca; }
+  .ph-linen { background: #d3c9ba; }
+  .ph-sand { background: #b9a891; }
+  .ph-taupe { background: #8e8070; }
+  .ph-walnut { background: #4a3d33; }
+}
+
+/* Movimento --------------------------------------------------
+   Um único gesto recorrente: a imagem se abre como uma porta
+   de correr ao entrar na tela. Texto permanece estático. */
+.reveal-door { clip-path: inset(0 0 0 0); }
+.js .reveal-door:not(.is-in) { clip-path: inset(0 0 0 100%); }
+.js .reveal-door { transition: clip-path 1.3s var(--ease-door); }
+.reveal-door > * { transition: transform 1.8s var(--ease-quiet); }
+.js .reveal-door:not(.is-in) > * { transform: scale(1.06); }
+
+/* Sequência de abertura do hero (único momento orquestrado) */
+@keyframes rise { from { opacity: 0; transform: translateY(21px); } to { opacity: 1; transform: none; } }
+.hero-in { animation: rise 1.2s var(--ease-quiet) both; }
+.hero-in-2 { animation-delay: 0.18s; }
+.hero-in-3 { animation-delay: 0.36s; }
+
+/* Parallax discreto sem JavaScript (onde suportado) */
+@supports (animation-timeline: scroll()) {
+  @keyframes drift { to { transform: translateY(8%) scale(1.04); } }
+  .parallax {
+    animation: drift linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 100vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .js .reveal-door:not(.is-in) { clip-path: inset(0); }
+  .parallax { animation: none; }
+}
