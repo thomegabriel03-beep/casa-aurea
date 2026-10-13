@@ -78,7 +78,7 @@ export default async function CollectionEditor({ params, searchParams }: { param
           <form action={saveCollectionProducts.bind(null, id)}>
             <div className="adm-table-wrap"><table className="adm-table">
               <thead><tr><th>Manter</th><th>Ordem</th><th>Código</th><th>Peça</th><th>Visibilidade</th><th>Curadoria</th></tr></thead>
-              <tbody>{(links ?? []).map((l: { product_id: string; sort_order: number; products: { name: string; public_code: string | null; visibility: string; curation_tier: string } | null }) => (
+              <tbody>{((links ?? []) as unknown as { product_id: string; sort_order: number; products: { name: string; public_code: string | null; visibility: string; curation_tier: string } | null }[]).map((l) => (
                 <tr key={l.product_id}>
                   <td><input type="checkbox" name="keep" value={l.product_id} defaultChecked aria-label="Manter na coleção" /></td>
                   <td><input type="number" name={`order_${l.product_id}`} defaultValue={l.sort_order} style={{ width: "5rem" }} aria-label="Ordem" /></td>

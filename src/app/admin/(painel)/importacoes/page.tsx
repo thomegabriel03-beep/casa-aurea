@@ -39,7 +39,7 @@ export default async function Imports({ searchParams }: { searchParams: Promise<
           <Field label="Fornecedor padrão (opcional)"><select name="supplier_id" defaultValue=""><option value="">—</option>
             {(suppliers ?? []).map((s: { id: string; name: string }) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
           <Field label="Catálogo padrão (opcional)"><select name="catalog_id" defaultValue=""><option value="">—</option>
-            {(catalogs ?? []).map((c: { id: string; name: string; year: number | null; suppliers: { name: string } | null }) => <option key={c.id} value={c.id}>{c.suppliers?.name} · {c.name} {c.year ?? ""}</option>)}</select></Field>
+            {((catalogs ?? []) as unknown as { id: string; name: string; year: number | null; suppliers: { name: string } | null }[]).map((c) => <option key={c.id} value={c.id}>{c.suppliers?.name} · {c.name} {c.year ?? ""}</option>)}</select></Field>
           <div className="adm-actions" style={{ gridColumn: "1/-1" }}><SubmitButton>Importar</SubmitButton></div>
         </form>
         <p className="adm-note" style={{ marginTop: "1rem" }}>Colunas reconhecidas: {COLS}. Listas separadas por “|”. JSON e extração de PDF entram neste mesmo fluxo de lotes.</p>
