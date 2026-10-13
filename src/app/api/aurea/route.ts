@@ -1,0 +1,92 @@
+import { AUREA_KB } from "@/lib/aurea-kb";
+
+/* Áurea — concierge de IA da Casa Áurea.
+   O navegador envia só a conversa; o conhecimento do site e a chave ficam no servidor.
+   Sem ANTHROPIC_API_KEY (ou com erro), responde 503 e o site usa o motor local de respostas. */
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const MODEL = process.env.AUREA_MODEL || "claude-haiku-4-5-20251001";
+const MAX_TURNS = 16;
+const MAX_CHARS = 2000;
+const WINDOW_MS = 10 * 60 * 1000;
+const MAX_PER_WINDOW = 30;
+
+const hits = new Map<string, { n: number; t: number }>();
+function limited(ip: string): boolean {
+  const now = Date.now();
+  const h = hits.get(ip);
+  if (!h || now - h.t > WINDOW_MS) {
+    hits.set(ip, { n: 1, t: now });
+    return false;
+  }
+  h.n += 1;
+  return h.n > MAX_PER_WINDOW;
+}
+
+type Turn = { role: "user" | "assistant"; content: string };
+
+function clean(input: unknown): Turn[] | null {
+  if (!Array.isArray(input)) return null;
+  const turns: Turn[] = [];
+  for (const m of input.slice(-MAX_TURNS)) {
+    if (!m || typeof m !== "object") return null;
+    const role = (m as { role?: unknown }).role;
+    const content = (m as { content?: unknown }).content;
+    if ((role !== "user" && role !== "assistant") || typeof content !== "string") return null;
+    const text = content.trim().slice(0, MAX_CHARS);
+    if (!text) continue;
+    const last = turns[turns.length - 1];
+    if (last && last.role === role) last.content += "\n" + text;
+    else turns.push({ role, content: text });
+  }
+  while (turns.length && turns[0].role !== "user") turns.shift();
+  if (!turns.length || turns[turns.length - 1].role !== "user") return null;
+  return turns;
+}
+
+export async function POST(req: Request) {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return Response.json({ error: "indisponivel" }, { status: 503 });
+
+  const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "anon";
+  if (limited(ip)) return Response.json({ error: "limite" }, { status: 429 });
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: "invalido" }, { status: 400 });
+  }
+  const turns = clean((body as { messages?: unknown })?.messages);
+  if (!turns) return Response.json({ error: "invalido" }, { status: 400 });
+
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 700,
+        system: [{ type: "text", text: AUREA_KB, cache_control: { type: "ephemeral" } }],
+        messages: turns,
+      }),
+    });
+    if (!r.ok) return Response.json({ error: "ia" }, { status: 503 });
+    const data = (await r.json()) as { content?: { type: string; text?: string }[] };
+    const text = (data.content || [])
+      .filter((c) => c.type === "text")
+      .map((c) => c.text || "")
+      .join("")
+      .trim();
+    if (!text) return Response.json({ error: "vazio" }, { status: 503 });
+    return Response.json({ text });
+  } catch {
+    return Response.json({ error: "ia" }, { status: 503 });
+  }
+}
