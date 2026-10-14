@@ -72,9 +72,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                   <tr key={r.id}>
                     <td><input type="checkbox" name="ids" value={r.id} aria-label={`Selecionar ${r.name}`} /></td>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <td>{r.primary_image ? <img className="adm-thumb" src={r.primary_image} alt="" loading="lazy" /> : <span className="adm-thumb" />}</td>
+                    <td><Link className="adm-thumb-link" href={`/admin/apresentar/${r.id}?de=${encodeURIComponent(`/admin/produtos${qs ? `?${qs}` : ""}`)}`} title="Abrir ficha para mostrar ao cliente">{r.primary_image ? <img className="adm-thumb" src={r.primary_image} alt={`Abrir ficha de ${r.name}`} loading="lazy" /> : <span className="adm-thumb" />}</Link></td>
                     <td className="adm-code">{r.public_code ?? "—"}</td>
-                    <td className="adm-title"><Link href={`/admin/produtos/${r.id}`}>{r.name}</Link></td>
+                    <td className="adm-title"><Link href={`/admin/produtos/${r.id}`}>{r.name}</Link><Link className="adm-show" href={`/admin/apresentar/${r.id}?de=${encodeURIComponent(`/admin/produtos${qs ? `?${qs}` : ""}`)}`}>Mostrar ao cliente</Link></td>
                     <td>{r.type_name ?? "—"}</td>
                     <td>{r.supplier_name ?? "—"}</td>
                     <td>

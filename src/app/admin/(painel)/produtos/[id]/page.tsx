@@ -57,6 +57,7 @@ export default async function ProductEditor({ params, searchParams }: {
       <PageHeader title={p.name} description={p.public_code ? `Código Casa Áurea ${p.public_code}` : "Sem código: defina o tipo para gerar."}>
         <Badge map="visibility" value={p.visibility} /> <Badge map="curation" value={p.curation_tier} />
         {p.visibility === "public" && <Link className="adm-btn ghost sm" href={`/produto/${p.slug}`} target="_blank">Ver no site</Link>}
+        <Link className="adm-btn ghost sm" href={`/admin/apresentar/${id}`}>Mostrar ao cliente</Link>
         <form action={A.duplicateProduct.bind(null, id)}><SubmitButton variant="ghost" size="sm">Duplicar</SubmitButton></form>
       </PageHeader>
 

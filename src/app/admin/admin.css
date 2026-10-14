@@ -143,3 +143,32 @@
 .adm-seg button{font-size:.75rem;padding:.35rem .6rem;background:#fff;color:#5d554b;border:0;border-right:1px solid #d9d1c4;cursor:pointer}
 .adm-seg button:last-child{border-right:0}
 .adm-seg button[aria-pressed="true"]{background:#1d2136;color:#fff}
+
+/* ===== Ficha de apresentação ao cliente (/admin/apresentar/[id]) ===== */
+.apr{min-height:100vh;background:#f6f3ee;color:#1d2136;display:flex;flex-direction:column}
+.apr-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.9rem clamp(1rem,3vw,2.5rem);background:#0f1628;color:#efe8dd}
+.apr-bar a{color:#efe8dd;text-decoration:none;font-size:.875rem}
+.apr-back:hover,.apr-wa:hover{text-decoration:underline}
+.apr-brand{font-family:'Cormorant Garamond',Georgia,serif;letter-spacing:.24em;font-size:.95rem}
+.apr-wa{border:1px solid rgb(239 232 221/.35);padding:.45rem .9rem;border-radius:4px}
+.apr-card{flex:1;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:clamp(1.5rem,4vw,3.5rem);padding:clamp(1rem,3vw,2.5rem);max-width:1440px;width:100%;margin:0 auto;align-items:start}
+.apr-media{display:grid;gap:.75rem}
+.apr-main{width:100%;max-height:78vh;object-fit:contain;background:#fff;border:1px solid #e4ddd2;border-radius:6px}
+.apr-nophoto{aspect-ratio:4/3;display:grid;place-items:center;background:#efe9e0;color:#6f6355;border-radius:6px}
+.apr-thumbs{display:flex;gap:.5rem;overflow-x:auto;padding-bottom:.25rem}
+.apr-thumbs a{flex:none;border:1px solid #e4ddd2;border-radius:4px;overflow:hidden;background:#fff;opacity:.7}
+.apr-thumbs a[aria-current="true"]{opacity:1;border-color:#a8804f;box-shadow:0 0 0 1px #a8804f}
+.apr-thumbs img{width:76px;height:76px;object-fit:cover;display:block}
+.apr-info{position:sticky;top:1.5rem;display:grid;gap:1rem}
+.apr-eyebrow{font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:#a8804f}
+.apr-info h1{font-family:var(--serif,'Cormorant Garamond',Georgia,serif);font-weight:400;font-size:clamp(2rem,3.4vw,3rem);line-height:1.05}
+.apr-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9rem;letter-spacing:.04em;color:#6f6355}
+.apr-desc{font-size:1.0625rem;line-height:1.6;color:#3a3a46}
+.apr-specs{display:grid;gap:.9rem;border-top:1px solid #e4ddd2;padding-top:1rem}
+.apr-specs dt{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:#6f6355;margin-bottom:.2rem}
+.apr-specs dd{display:flex;flex-direction:column;gap:.15rem;font-size:1rem}
+.apr-note{font-size:.8125rem;color:#6f6355;border-top:1px solid #e4ddd2;padding-top:.9rem}
+.adm-show{font-size:.75rem;margin-left:.5rem;color:var(--a-bronze);text-decoration:none;white-space:nowrap}
+.adm-show:hover{text-decoration:underline}
+a.adm-thumb-link{display:block}
+@media(max-width:860px){.apr-card{grid-template-columns:1fr}.apr-info{position:static}.apr-main{max-height:60vh}}
