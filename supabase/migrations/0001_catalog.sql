@@ -96,8 +96,11 @@ create index products_category_idx   on products(category_id);
 create index product_images_prod_idx on product_images(product_id, sort_order);
 create index product_coll_coll_idx   on product_collections(collection_id, sort_order);
 -- busca por nome, SKU e palavras-chave (português)
+-- array_to_string não é IMMUTABLE no Postgres; o índice precisa de uma versão imutável
+create or replace function immutable_array_to_string(text[], text) returns text
+  language sql immutable parallel safe as $$ select array_to_string($1, $2) $$;
 create index products_search_idx on products using gin (
-  to_tsvector('portuguese', coalesce(name,'') || ' ' || coalesce(sku,'') || ' ' || coalesce(array_to_string(keywords,' '),''))
+  to_tsvector('portuguese'::regconfig, coalesce(name,'') || ' ' || coalesce(sku,'') || ' ' || coalesce(immutable_array_to_string(keywords,' '),''))
 );
 
 -- updated_at automático
