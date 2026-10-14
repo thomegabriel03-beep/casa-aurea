@@ -9,3 +9,5 @@ catalogos/
 *.zip
 .vercel
 reference/preview/*.png
+__pycache__/
+*.pyc
