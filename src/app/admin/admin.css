@@ -172,3 +172,18 @@
 .adm-show:hover{text-decoration:underline}
 a.adm-thumb-link{display:block}
 @media(max-width:860px){.apr-card{grid-template-columns:1fr}.apr-info{position:static}.apr-main{max-height:60vh}}
+
+/* ficha em janela (lista de produtos) */
+.fv{position:fixed;inset:0;z-index:200;background:#f6f3ee;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;animation:fv-in .18s ease-out}
+@keyframes fv-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fv-x{background:none;border:0;color:#efe8dd;font:inherit;font-size:.875rem;cursor:pointer;padding:0}
+.fv-x:hover{text-decoration:underline}
+.fv-tools{display:flex;align-items:center;gap:1rem}
+.fv-count{font-size:.8125rem;color:rgb(239 232 221/.7);font-variant-numeric:tabular-nums}
+.fv-card{animation:fv-in .15s ease-out}
+.fv-main{cursor:zoom-in;animation:fv-in .2s ease-out}
+.fv-title{font-family:var(--serif,'Cormorant Garamond',Georgia,serif);font-weight:400;font-size:clamp(2rem,3.4vw,3rem);line-height:1.05}
+.apr-thumbs button{flex:none;border:1px solid #e4ddd2;border-radius:4px;overflow:hidden;background:#fff;opacity:.7;padding:0;cursor:pointer}
+.apr-thumbs button[aria-pressed="true"]{opacity:1;border-color:#a8804f;box-shadow:0 0 0 1px #a8804f}
+.fv-nav{display:flex;gap:.5rem;margin-top:.5rem}
+@media(max-width:860px){.fv-count{display:none}.apr-bar .apr-brand{display:none}}
