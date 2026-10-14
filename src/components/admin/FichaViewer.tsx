@@ -58,10 +58,12 @@ export function FichaViewer({ items }: { items: FichaItem[] }) {
       const i = items.findIndex((x) => x.id === el.dataset.ficha);
       if (i < 0) return;
       e.preventDefault();
+      e.stopPropagation();
       setIdx(i);
     }
-    document.addEventListener("click", onClick);
-    return () => document.removeEventListener("click", onClick);
+    // fase de captura: o clique é tratado aqui antes de qualquer navegação da página
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
   }, [items]);
 
   // carregar a peça atual e já adiantar as vizinhas

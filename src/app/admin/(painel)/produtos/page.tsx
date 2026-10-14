@@ -73,9 +73,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                   <tr key={r.id}>
                     <td><input type="checkbox" name="ids" value={r.id} aria-label={`Selecionar ${r.name}`} /></td>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <td><Link className="adm-thumb-link" data-ficha={r.id} prefetch={false} href={`/admin/apresentar/${r.id}?de=${encodeURIComponent(`/admin/produtos${qs ? `?${qs}` : ""}`)}`} title="Abrir ficha para mostrar ao cliente">{r.primary_image ? <img className="adm-thumb" src={r.primary_image} alt={`Abrir ficha de ${r.name}`} loading="lazy" /> : <span className="adm-thumb" />}</Link></td>
+                    <td>{/* eslint-disable-next-line @next/next/no-html-link-for-pages */}<a className="adm-thumb-link" data-ficha={r.id} href={`/admin/apresentar/${r.id}?de=${encodeURIComponent(`/admin/produtos${qs ? `?${qs}` : ""}`)}`} title="Abrir ficha para mostrar ao cliente">{r.primary_image ? <img className="adm-thumb" src={r.primary_image} alt={`Abrir ficha de ${r.name}`} loading="lazy" /> : <span className="adm-thumb" />}</a></td>
                     <td className="adm-code">{r.public_code ?? "—"}</td>
-                    <td className="adm-title"><Link href={`/admin/produtos/${r.id}`}>{r.name}</Link><Link className="adm-show" data-ficha={r.id} prefetch={false} href={`/admin/apresentar/${r.id}?de=${encodeURIComponent(`/admin/produtos${qs ? `?${qs}` : ""}`)}`}>Mostrar ao cliente</Link></td>
+                    <td className="adm-title"><Link href={`/admin/produtos/${r.id}`}>{r.name}</Link>{/* eslint-disable-next-line @next/next/no-html-link-for-pages */}<a className="adm-show" data-ficha={r.id} href={`/admin/apresentar/${r.id}?de=${encodeURIComponent(`/admin/produtos${qs ? `?${qs}` : ""}`)}`}>Mostrar ao cliente</a></td>
                     <td>{r.type_name ?? "—"}</td>
                     <td>{r.supplier_name ?? "—"}</td>
                     <td>
