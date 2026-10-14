@@ -1,0 +1,38 @@
+name: Importar catálogos no Supabase
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "teste = só mostra o plano; importar = grava no banco"
+        required: true
+        default: "teste"
+        type: choice
+        options: [teste, importar]
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Baixar os pacotes (branch catalogos)
+        run: |
+          git fetch --depth 1 origin catalogos
+          mkdir -p catalogos && git --work-tree=catalogos checkout origin/catalogos -- .
+          cd catalogos
+          for base in $(ls *.zip.part-aa 2>/dev/null | sed 's/\.part-aa$//'); do cat "$base".part-* > "$base" && rm "$base".part-*; done
+          ls -la
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Dependências
+        run: pip install -r worker/requirements.txt
+      - name: Importar
+        working-directory: worker
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ "${{ inputs.modo }}" = "importar" ]; then
+            python -m casa_aurea_import.import_all --dir ../catalogos
+          else
+            python -m casa_aurea_import.import_all --dir ../catalogos --dry-run
+          fi
