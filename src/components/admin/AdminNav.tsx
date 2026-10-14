@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { BrandMark } from "./BrandMark";
 
 const GROUPS: { title?: string; items: [string, string][] }[] = [
   { items: [["/admin", "Dashboard"]] },
@@ -23,7 +24,7 @@ export function AdminNav({ footer }: { footer?: React.ReactNode }) {
   return (
     <>
       <div className="adm-top">
-        <Link href="/admin" className="brand" style={{ textDecoration: "none" }}>CASA ÁUREA</Link>
+        <Link href="/admin" className="brand" style={{ textDecoration: "none" }} aria-label="Casa Áurea · Painel"><BrandMark size={26} /></Link>
         <button type="button" className="adm-menu-btn" aria-expanded={open} aria-controls="adm-drawer" onClick={() => setOpen((o) => !o)}>Menu</button>
       </div>
       <div className={`adm-drawer${open ? " is-open" : ""}`} id="adm-drawer">

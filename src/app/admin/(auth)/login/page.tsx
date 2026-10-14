@@ -1,4 +1,5 @@
 import { LoginForm } from "./LoginForm";
+import { BrandMark } from "@/components/admin/BrandMark";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; erro?: string }> }) {
@@ -6,7 +7,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <main className="adm-login">
       <div className="adm-card">
-        <p style={{ fontFamily: "var(--font-brand, serif)", letterSpacing: ".3em", fontSize: ".875rem" }}>CASA ÁUREA</p>
+        <p className="adm-login-brand"><BrandMark size={34} /></p>
         <h1 style={{ fontFamily: "var(--font-serif)", fontSize: "1.625rem", margin: ".5rem 0 1.25rem", fontWeight: 400 }}>Painel</h1>
         {!isSupabaseConfigured && (
           <div className="adm-alert" style={{ marginBottom: "1rem" }}>

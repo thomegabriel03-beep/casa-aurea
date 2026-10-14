@@ -306,3 +306,22 @@ a.adm-thumb-link{display:block}
 .adm-shell>.adm-main{min-width:0}
 .orc-app .orc-ed>*,.orc-app .orc-row>*,.orc-app .orc-tiles>*{min-width:0}
 .orc-app input,.orc-app select,.orc-app textarea{max-width:100%}
+
+/* ===== Marca no painel + menu lateral com rolagem própria ===== */
+.adm-brandmark{display:inline-flex;align-items:center;gap:.8rem;color:inherit}
+.adm-brandmark svg{flex:none;color:#cfae82}
+.adm-brandname{font-family:var(--font-brand,'Cormorant Garamond',Georgia,serif);letter-spacing:.28em;font-size:1rem;line-height:1;white-space:nowrap}
+.adm-side .brand{padding:.75rem 0 1.5rem;margin-bottom:.25rem;border-bottom:1px solid rgb(239 232 221/.12)}
+.adm-login-brand{display:flex;justify-content:center;margin-bottom:.5rem;color:#1d2136}
+.adm-login-brand .adm-brandname{font-size:1.15rem}
+@media(min-width:1024px){
+  .adm-side{position:sticky;top:0;align-self:start;height:100vh;height:100dvh;overflow-y:auto;overscroll-behavior:contain;
+    scrollbar-width:thin;scrollbar-color:rgb(239 232 221/.25) transparent}
+  .adm-side::-webkit-scrollbar{width:6px}
+  .adm-side::-webkit-scrollbar-thumb{background:rgb(239 232 221/.22);border-radius:3px}
+  .adm-nav{padding-bottom:.5rem}
+}
+@media(min-width:1024px) and (max-height:820px){
+  .adm-nav a{padding-top:.42rem;padding-bottom:.42rem}
+  .adm-nav .grp{padding-top:.75rem}
+}
