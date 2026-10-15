@@ -137,6 +137,12 @@ for bad in ['Brazil Contemporâneo', 'Estofados Pirâmide', 'Tellaio', 'Heitor M
     if bad in s:
         sys.exit('dado interno ainda presente: ' + bad)
 
+# a mesma seleção vai para o servidor: depois de ligada ao banco (worker/link_launch.py),
+# o site lê essas peças do banco e mantém foto, textos e medidas aprovados (src/lib/catalog/site-feed.ts)
+i = s.find('id="launchFixture"'); a = s.find('>', i) + 1; b = s.find('</script>', a)
+with open(os.path.join(ROOT, 'src', 'data', 'launch-pieces.json'), 'w', encoding='utf-8') as fh:
+    fh.write(s[a:b])
+
 os.makedirs(OUT, exist_ok=True)
 with open(os.path.join(OUT, 'index.html'), 'w', encoding='utf-8') as f:
     f.write(s)

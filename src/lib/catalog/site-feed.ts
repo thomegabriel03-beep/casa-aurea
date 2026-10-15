@@ -1,5 +1,6 @@
 import "server-only";
 import { publicClient } from "@/lib/supabase/public";
+import launchPieces from "@/data/launch-pieces.json";
 
 /* Peças do banco para o site público (a experiência aprovada em public/site/index.html).
    Lê SOMENTE as views public_* — que já deixam de fora peças internas e campos privados
@@ -24,10 +25,10 @@ export type SiteItem = {
   mt: string[];
   fn: string[];
   ds: string | null;
-  s: { pt: string } | null;
+  s: { pt: string; en?: string; es?: string } | null;
   imgs: string[];
   tg: string;
-  bg: null;
+  bg: number | null;
 };
 
 type Row = Record<string, unknown>;
@@ -113,8 +114,21 @@ async function all(view: string, cols: string, order: string[]): Promise<Row[]> 
   return out;
 }
 
-export async function getSiteItems(): Promise<SiteItem[]> {
-  if (!publicClient()) return [];
+/* seleção de lançamento do site aprovado (gerada por scripts/build_public_site.py) */
+export type LaunchItem = {
+  k: string; n: string; t: string; st: string | null; env: string | null; slot: string | null; sig: boolean | null;
+  v: SiteItem["v"]; mt: string[] | null; fn: string[] | null; ds: string | null; desc: string | null; imgs: string[];
+  tg: string | null; s: { pt: string; en?: string; es?: string } | null; bg: number | null; acv: boolean | null;
+};
+const LAUNCH = launchPieces as unknown as LaunchItem[];
+const SITE_PHOTO = /\/site\/([0-9a-f]{16})-(\d+)\.[a-z0-9]+$/i;
+
+/** Peças públicas do banco no formato do site. `linked` diz se a seleção de lançamento já foi
+ *  ligada ao banco (worker/link_launch): a partir daí o banco é a única fonte e o painel controla tudo.
+ *  Peça ligada mantém foto, textos (PT/EN/ES), medidas e palavras-chave aprovados; nome, código,
+ *  tipo, ambiente e Vitrine/Acervo vêm do painel. */
+export async function getSiteFeed(): Promise<{ items: SiteItem[]; linked: boolean }> {
+  if (!publicClient()) return { items: [], linked: false };
   const [prods, media, variants, mats, fins] = await Promise.all([
     all("public_products", "id, public_code, name, short_description, description, type_code, type_name, type_plural, type_section, subtype_name, environment, curation_tier, designer, sort_order, updated_at", ["id"]),
     all("public_product_media", "product_id, type, url, sort_order, is_primary", ["product_id", "url"]),
@@ -129,8 +143,18 @@ export async function getSiteItems(): Promise<SiteItem[]> {
     return m;
   };
   const gm = group(media), gv = group(variants), gmt = group(mats), gf = group(fins);
+  const launch = new Map(LAUNCH.map((x, i) => [x.k, { x, i }]));
+  const linkOf = new Map<string, { x: LaunchItem; i: number; photos: string[] }>();
+  gm.forEach((rows, pid) => {
+    const site = rows
+      .map((m) => ({ url: m.url as string, hit: String(m.url ?? "").match(SITE_PHOTO) }))
+      .filter((m) => m.hit && launch.has(m.hit[1].toLowerCase()));
+    if (!site.length) return;
+    const l = launch.get(site[0].hit![1].toLowerCase())!;
+    linkOf.set(pid, { ...l, photos: site.sort((a, b) => Number(a.hit![2]) - Number(b.hit![2])).map((m) => m.url) });
+  });
 
-  return prods
+  const items = prods
     .filter((p) => p.public_code && p.type_code && p.name)
     .sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0) || String(b.updated_at).localeCompare(String(a.updated_at)))
     .map((p): SiteItem | null => {
@@ -156,6 +180,22 @@ export async function getSiteItems(): Promise<SiteItem[]> {
         .filter((x) => x[0]);
       const text = ((p.short_description as string) || (p.description as string) || "").trim();
       const env = p.environment === "outdoor" ? "outdoor" : "indoor";
+      const L = linkOf.get(id);
+      if (L) {
+        const x = L.x;
+        const sameText = !text || (x.s?.pt ?? x.desc ?? "").trim() === text;
+        let tg = (x.tg || tagsOf(p, typeName, sub, mt, fn)).split(" ").filter((w) => w !== "area-externa");
+        if (env === "outdoor") tg = [...tg, "area-externa"];
+        return {
+          k: id, c: code, sl: slugify(`${name} ${code}`), n: name,
+          t: typeCode, tn: typeName, tp: (p.type_plural as string) || typeName, sec: (p.type_section as string) || "moveis",
+          st: sub ?? x.st, env, slot: (x.env || "indoor") === env && x.slot ? x.slot : slotOf(typeCode, sub, env),
+          sig: p.curation_tier === "signature", acv: p.curation_tier === "archive",
+          v: x.v?.length ? x.v : v, mt: x.mt?.length ? x.mt : mt, fn: x.fn?.length ? x.fn : fn, ds: (p.designer as string) || x.ds || null,
+          s: sameText ? (x.s ?? (text ? { pt: text } : null)) : { pt: text },
+          imgs: L.photos, tg: tg.join(" "), bg: x.bg,
+        };
+      }
       return {
         k: id, c: code, sl: slugify(`${name} ${code}`), n: name,
         t: typeCode, tn: typeName, tp: (p.type_plural as string) || typeName, sec: (p.type_section as string) || "moveis",
@@ -167,6 +207,15 @@ export async function getSiteItems(): Promise<SiteItem[]> {
       };
     })
     .filter((x): x is SiteItem => x !== null);
+
+  // peças ligadas primeiro, na ordem do site aprovado; depois as demais publicadas pelo painel
+  const pos = (it: SiteItem) => linkOf.get(it.k)?.i ?? Infinity;
+  const ordered = items.map((it, j) => ({ it, j })).sort((a, b) => pos(a.it) - pos(b.it) || a.j - b.j).map((o) => o.it);
+  return { items: ordered, linked: linkOf.size > 0 };
+}
+
+export async function getSiteItems(): Promise<SiteItem[]> {
+  return (await getSiteFeed()).items;
 }
 
 /* linhas da Áurea para as peças do banco (mesmo formato da lista de peças do prompt) */

@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { AUREA_KB } from "@/lib/aurea-kb";
-import { aureaLines, getSiteItems } from "@/lib/catalog/site-feed";
+import { aureaLines, getSiteFeed } from "@/lib/catalog/site-feed";
 
 /* Áurea — concierge de IA da Casa Áurea.
    O navegador envia só a conversa; o conhecimento do site e a chave ficam no servidor.
@@ -28,7 +28,16 @@ function limited(ip: string): boolean {
 }
 
 /* peças publicadas no painel: a Áurea também as conhece (lista atualizada a cada 5 minutos) */
-const dbPieces = unstable_cache(async () => aureaLines(await getSiteItems()), ["aurea-db-pieces"], { revalidate: 300 });
+const dbPieces = unstable_cache(
+  async () => {
+    const f = await getSiteFeed();
+    return { lines: aureaLines(f.items), linked: f.linked };
+  },
+  ["aurea-db-pieces"],
+  { revalidate: 300 },
+);
+// prompt sem a lista fixa de peças da seleção de lançamento (usada quando ela já vem do banco)
+const KB_NO_LAUNCH = AUREA_KB.split("\n").filter((l) => !/^- \[\[[a-z0-9-]+-ca-[a-z]{3}-\d{4}\]\]/.test(l)).join("\n");
 
 type Turn = { role: "user" | "assistant"; content: string };
 
@@ -67,19 +76,19 @@ export async function POST(req: Request) {
   const turns = clean((body as { messages?: unknown })?.messages);
   if (!turns) return Response.json({ error: "invalido" }, { status: 400 });
 
-  let extra = "";
+  let db = { lines: "", linked: false };
   try {
-    extra = await dbPieces();
+    db = await dbPieces();
   } catch {
-    extra = "";
+    // sem o banco, a Áurea segue com a lista fixa do site aprovado
   }
   const system: { type: "text"; text: string; cache_control?: { type: "ephemeral" } }[] = [
-    { type: "text", text: AUREA_KB, cache_control: { type: "ephemeral" } },
+    { type: "text", text: db.linked ? KB_NO_LAUNCH : AUREA_KB, cache_control: { type: "ephemeral" } },
   ];
-  if (extra)
+  if (db.lines)
     system.push({
       type: "text",
-      text: "# MAIS PEÇAS DO SITE (publicadas pela equipe; mesmas regras da lista acima)\n" + extra,
+      text: (db.linked ? "# PEÇAS PUBLICADAS NO SITE (continuação da lista acima; mesmas regras)\n" : "# MAIS PEÇAS DO SITE (publicadas pela equipe; mesmas regras da lista acima)\n") + db.lines,
     });
 
   try {
