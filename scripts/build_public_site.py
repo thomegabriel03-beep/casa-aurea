@@ -49,6 +49,29 @@ b = s.find('</script>', a)
 items = [it for it in json.loads(s[a:b]) if not it.get('hide')]
 s = s[:a] + json.dumps(items, ensure_ascii=False, separators=(',', ':')) + s[b:]
 
+# 2b. peças publicadas no painel (banco): o servidor (src/app/site-html) preenche este espaço
+#     com as peças em Vitrine/Acervo, no mesmo formato da seleção de lançamento.
+#     Se uma peça do banco tem o mesmo nome de uma peça da seleção, vale a do banco.
+b = s.find('</script>', a) + len('</script>')
+s = s[:b] + '<script type="application/json" id="dbFixture">[]</script>' + s[b:]
+old = ("    var el=document.getElementById('launchFixture'); if(!el)return;\n"
+       "    JSON.parse(el.textContent).forEach(function(it,i){\n"
+       "      var ty=T(it.t); if(!ty)return;\n"
+       "      var code=nextCode(it.t), keys=")
+new = ("    var el=document.getElementById('launchFixture'); if(!el)return;\n"
+       "    var DB=[];try{DB=JSON.parse((document.getElementById('dbFixture')||{}).textContent||'[]')}catch(e){}\n"
+       "    DB=DB.filter(function(d){return !PRODUCTS.some(function(p){return norm(p.name)===norm(d.n)})});\n"
+       "    var dbName={},dbCode={};DB.forEach(function(d){dbName[norm(d.n)]=1;dbCode[d.c]=1;\n"
+       "      if(!T(d.t)&&d.tn)TYPES.push({code:d.t,name:d.tn,plural:d.tp||d.tn,slug:slugify(d.tp||d.tn),section:d.sec||'moveis',order:TYPES.length+1})});\n"
+       "    JSON.parse(el.textContent).concat(DB).forEach(function(it,i){\n"
+       "      var ty=T(it.t); if(!ty)return;\n"
+       "      if(!it.c&&dbName[norm(it.n)]){nextCode(it.t);return}\n"
+       "      var code=it.c||nextCode(it.t); while(!it.c&&dbCode[code])code=nextCode(it.t);\n"
+       "      var keys=")
+s = replace_once(s, old, new, 'peças do banco')
+s = replace_once(s, "PRODUCTS.push({id:'lx-'+it.k,slug:slugify(it.n+' '+code),",
+                 "PRODUCTS.push({id:'lx-'+it.k,slug:it.sl||slugify(it.n+' '+code),", 'slug do banco')
+
 # 3. script principal: tira o painel de demonstração inteiro
 mi = s.find('PAINEL /admin — mesma estrutura do painel do Next.js')
 start = s.rfind('/* =====', 0, mi)

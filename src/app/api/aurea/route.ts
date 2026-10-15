@@ -1,4 +1,6 @@
+import { unstable_cache } from "next/cache";
 import { AUREA_KB } from "@/lib/aurea-kb";
+import { aureaLines, getSiteItems } from "@/lib/catalog/site-feed";
 
 /* Áurea — concierge de IA da Casa Áurea.
    O navegador envia só a conversa; o conhecimento do site e a chave ficam no servidor.
@@ -24,6 +26,9 @@ function limited(ip: string): boolean {
   h.n += 1;
   return h.n > MAX_PER_WINDOW;
 }
+
+/* peças publicadas no painel: a Áurea também as conhece (lista atualizada a cada 5 minutos) */
+const dbPieces = unstable_cache(async () => aureaLines(await getSiteItems()), ["aurea-db-pieces"], { revalidate: 300 });
 
 type Turn = { role: "user" | "assistant"; content: string };
 
@@ -62,6 +67,21 @@ export async function POST(req: Request) {
   const turns = clean((body as { messages?: unknown })?.messages);
   if (!turns) return Response.json({ error: "invalido" }, { status: 400 });
 
+  let extra = "";
+  try {
+    extra = await dbPieces();
+  } catch {
+    extra = "";
+  }
+  const system: { type: "text"; text: string; cache_control?: { type: "ephemeral" } }[] = [
+    { type: "text", text: AUREA_KB, cache_control: { type: "ephemeral" } },
+  ];
+  if (extra)
+    system.push({
+      type: "text",
+      text: "# MAIS PEÇAS DO SITE (publicadas pela equipe; mesmas regras da lista acima)\n" + extra,
+    });
+
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -73,7 +93,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 700,
-        system: [{ type: "text", text: AUREA_KB, cache_control: { type: "ephemeral" } }],
+        system,
         messages: turns,
       }),
     });

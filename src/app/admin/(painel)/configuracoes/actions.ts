@@ -8,5 +8,5 @@ export async function saveSettings(form: FormData) {
   const siteUrl = String(form.get("site_url") ?? "").trim();
   const rows = [{ key: "whatsapp_number", value: number || null }, { key: "site_url", value: siteUrl || null }];
   await supabase.from("site_settings").upsert(rows.map((r) => ({ ...r, updated_at: new Date().toISOString() })));
-  revalidatePath("/admin/configuracoes"); revalidatePath("/", "layout");
+  revalidatePath("/admin/configuracoes"); revalidatePath("/", "layout"); revalidatePath("/site-html");
 }

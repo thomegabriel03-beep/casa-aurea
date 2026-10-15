@@ -24,10 +24,12 @@ const nextConfig: NextConfig = {
     imageSizes: [64, 128, 256, 384, 512],
   },
   poweredByHeader: false,
+  // a página inicial lê o modelo aprovado do disco e embute as peças do banco
+  outputFileTracingIncludes: { "/site-html": ["./public/site/index.html"] },
   // importação de planilhas e catálogos pelo painel (padrão do Next é 1 MB)
   experimental: { serverActions: { bodySizeLimit: "10mb" } },
   async rewrites() {
-    return { beforeFiles: [{ source: "/", destination: "/site/index.html" }], afterFiles: [], fallback: [] };
+    return { beforeFiles: [{ source: "/", destination: "/site-html" }], afterFiles: [], fallback: [] };
   },
   async redirects() {
     return PUBLIC_ROUTES.map(([source, destination]) => ({ source, destination, permanent: false }));

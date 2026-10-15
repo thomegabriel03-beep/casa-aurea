@@ -67,6 +67,7 @@ export async function getFicha(supabase: Client, id: string): Promise<Ficha | nu
   const sizes = ((variants.data ?? []) as unknown as Variant[])
     .map((v) => {
       const d = dims(v);
+      if (d && v.name && v.name.toLowerCase().includes(d.toLowerCase())) return v.name;
       return [v.name && v.name !== d ? v.name : null, d].filter(Boolean).join(" · ");
     })
     .filter(Boolean);

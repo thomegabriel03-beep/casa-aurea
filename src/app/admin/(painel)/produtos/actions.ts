@@ -11,7 +11,7 @@ const b = (f: FormData, k: string) => f.get(k) === "on";
 function revalidateProduct(id: string) {
   revalidatePath(`/admin/produtos/${id}`);
   revalidatePath("/admin/produtos");
-  revalidatePath("/", "layout"); // vitrine pública (ISR)
+  revalidatePath("/", "layout"); revalidatePath("/site-html"); // vitrine pública (ISR)
 }
 
 async function uniqueSlug(supabase: Awaited<ReturnType<typeof requireAdmin>>["supabase"], base: string, selfId?: string) {
@@ -107,7 +107,7 @@ export async function bulkAction(form: FormData) {
     } else if (action === "curated" || action === "archive" || action === "signature") {
       await supabase.from("products").update({ curation_tier: action }).in("id", ids);
     }
-    revalidatePath("/admin/produtos"); revalidatePath("/", "layout");
+    revalidatePath("/admin/produtos"); revalidatePath("/", "layout"); revalidatePath("/site-html");
   }
   redirect(`/admin/produtos?${String(form.get("qs") ?? "")}`);
 }
@@ -319,6 +319,6 @@ export async function releaseGoodPhotos() {
       released += ok.length;
     }
   }
-  revalidatePath("/admin/produtos"); revalidatePath("/", "layout");
+  revalidatePath("/admin/produtos"); revalidatePath("/", "layout"); revalidatePath("/site-html");
   redirect(`/admin/produtos?liberadas=${released}`);
 }

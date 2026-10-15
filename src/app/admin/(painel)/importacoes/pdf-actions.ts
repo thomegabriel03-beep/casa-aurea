@@ -46,7 +46,7 @@ export async function replaceMedia(productId: string, mediaId: string, items: { 
     width: item.width ?? null, height: item.height ?? null, source_type: "manual_upload", quality, hero_ready: long >= 2000, status: "active",
   }).select("id").single();
   if (created) await supabase.from("product_media").update({ replaced_by: created.id }).eq("id", mediaId);
-  revalidatePath(`/admin/produtos/${productId}`); revalidatePath("/", "layout");
+  revalidatePath(`/admin/produtos/${productId}`); revalidatePath("/", "layout"); revalidatePath("/site-html");
   return { error: error?.message ?? null };
 }
 

@@ -30,7 +30,7 @@ export async function saveCollection(id: string, form: FormData) {
     hero_media: s(form, "hero_media"), hero_mobile_media: s(form, "hero_mobile_media"), poster_image: s(form, "poster_image"),
     seo_title: s(form, "seo_title"), seo_description: s(form, "seo_description"), og_image: s(form, "og_image"),
   }).eq("id", id);
-  revalidatePath(`/admin/colecoes/${id}`); revalidatePath("/admin/colecoes"); revalidatePath("/", "layout");
+  revalidatePath(`/admin/colecoes/${id}`); revalidatePath("/admin/colecoes"); revalidatePath("/", "layout"); revalidatePath("/site-html");
   redirect(`/admin/colecoes/${id}?${error ? `erro=${encodeURIComponent(error.message)}` : "ok=salvo"}`);
 }
 
@@ -43,7 +43,7 @@ export async function saveCollectionProducts(id: string, form: FormData) {
   for (const pid of keep) {
     await supabase.from("product_collections").update({ sort_order: Number(form.get(`order_${pid}`)) || 0 }).eq("collection_id", id).eq("product_id", pid);
   }
-  revalidatePath(`/admin/colecoes/${id}`); revalidatePath("/", "layout");
+  revalidatePath(`/admin/colecoes/${id}`); revalidatePath("/", "layout"); revalidatePath("/site-html");
   redirect(`/admin/colecoes/${id}?ok=salvo`);
 }
 
@@ -58,6 +58,6 @@ export async function addProductsByCode(id: string, form: FormData) {
     await supabase.from("product_collections").upsert(prods.map((p: { id: string }) => ({ product_id: p.id, collection_id: id, sort_order: order++ })), { onConflict: "product_id,collection_id", ignoreDuplicates: true });
   }
   const missing = codes.filter((c) => !(prods ?? []).some((p: { public_code: string }) => p.public_code === c));
-  revalidatePath(`/admin/colecoes/${id}`); revalidatePath("/", "layout");
+  revalidatePath(`/admin/colecoes/${id}`); revalidatePath("/", "layout"); revalidatePath("/site-html");
   redirect(`/admin/colecoes/${id}?${missing.length ? `erro=${encodeURIComponent(`Não encontrados: ${missing.join(", ")}`)}` : "ok=salvo"}`);
 }
