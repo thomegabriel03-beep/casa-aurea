@@ -1,40 +1,73 @@
-# Casa Áurea — instruções do projeto
+# Casa Áurea — instruções do projeto (padrão Vetra)
 
-Site + catálogo + painel da Casa Áurea (mobiliário, decoração e interiores, showroom em Tijucas, SC).
-Desenvolvido pela Vetra (Gabriel e Monique). Pacote contratado: **Site + Áurea IA**.
-
-Stack: Next.js 15 (App Router) · TypeScript · Tailwind CSS 4 · Supabase (banco, auth do painel, storage) · Vercel.
 Responda e escreva textos de interface em português do Brasil.
 
+## Cliente
+- **Casa Áurea**: mobiliário, decoração e interiores, com showroom na Av. Valério Gomes, 42, Centro, Tijucas (SC).
+- Sócios: Rafa (Rafael) Müller e Camila Santiago.
+- Pacote contratado com a Vetra: **Site + Áurea IA** (site, catálogo, painel e concierge com IA).
+- Desenvolvido pela Vetra (Gabriel e Monique).
+
+## Stack
+Next.js 15 (App Router) · TypeScript · Tailwind CSS 4 · Supabase (banco, login do painel, storage) · Vercel (região `gru1`).
+- Site público = experiência aprovada V62 em `public/site/index.html`, gerada por `scripts/build_public_site.py`
+  a partir de `reference/preview/casa-aurea-preview.html`. Servida em `/` por `src/app/site-html/route.ts`, que embute
+  as peças do banco e faz os ajustes técnicos de servidor (SEO, ícone, links legais).
+- Rotas internas do site usam hash (`/#/moveis`, `/#/produto/slug`); `next.config.ts` redireciona `/moveis` etc.
+- Painel em `/admin`; Áurea IA em `POST /api/aurea` (Claude API no servidor, modelo em `AUREA_MODEL`,
+  padrão `claude-haiku-4-5-20251001`; sem chave, o site usa o motor local de respostas).
+
+## Links
+- Repositório: https://github.com/thomegabriel03-beep/casa-aurea (branch `main`)
+- Vercel: projeto `casa-aurea` (`prj_aEPRO5WSYSXpOsJH9B0tD1crxwzW`), time `vetra-digital-business`
+  · prévia protegida: https://casa-aurea-vetra-digital-business.vercel.app
+  · atenção: `casa-aurea.vercel.app` **não** é este projeto (é outro site).
+- Supabase: projeto "CASA ÁUREA", ref `orpdbmqrtokddyeopgzi` (us-east-2) · https://orpdbmqrtokddyeopgzi.supabase.co
+- Domínio oficial: **pendente** (o código assume `https://www.casaaurea.com.br` até `NEXT_PUBLIC_SITE_URL` ser definido).
+- Instagram: https://www.instagram.com/a.casaaurea · Linktree: https://linktr.ee/casa_aurea
+
 ## Regras que nunca mudam
-1. **Visual congelado.** `reference/preview/casa-aurea-preview.html` (V62) é a referência oficial aprovada pelo cliente.
-   Layout, textos (PT/EN/ES), espaçamentos e comportamento devem ficar iguais. Nenhuma mudança visual sem aprovação.
+1. **Visual V62 congelado.** `reference/preview/casa-aurea-preview.html` (V62) é a referência aprovada pelo cliente.
+   Layout, textos (PT/EN/ES), espaçamentos e comportamento ficam iguais.
+   **Nenhuma mudança visual sem autorização expressa do Gabriel.** Correções técnicas (SEO, links, segurança,
+   desempenho) são permitidas desde que não alterem o que se vê; na dúvida, pergunte.
 2. **Privacidade do catálogo.** O site público nunca mostra fornecedor, código original, catálogo de origem, página,
    notas internas, notas de qualidade ou custos. O público lê só as views `public_*`; RLS fecha as tabelas-base.
 3. **Importação.** Toda peça importada entra **interna + acervo**. Nada é publicado automaticamente.
    Sem IA generativa em massa sobre produtos.
-4. Segredos (`SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`) só no servidor, nunca com prefixo `NEXT_PUBLIC_`.
-
-## Etapa atual: portar a prévia para a produção
-O app já tem catálogo público, painel e importador. Falta trazer o que só existe na prévia.
-Leia `reference/README.md` antes de começar. Ordem sugerida (um PR por item, com build verde):
-
-1. **Design system da prévia**: tokens, tipografia e CSS globais da prévia em `src/app/globals.css`.
-2. **Header + idiomas**: seletor PT/EN/ES com globo no topo (sem seletor no rodapé); dicionário da prévia (`var I18N=`).
-3. **Home**: filme de abertura com scroll (`public/film/d` 1920×1080, `public/film/m` retrato; motor `rec/kindFor/pick/nearest/draw`
-   na prévia), categorias, faixa de números, "Quem assina" (retratos clicáveis → `/sobre#rafa` e `/sobre#camila`) **antes** do Showroom,
-   Showroom sem endereço e com botão "Agendar uma visita", rodapé com mapa (Google Maps embed) e endereço.
-4. **Páginas**: `/sobre` (Rafa & Camila), `/curadoria`, `/materiais`, `/busca` (busca por descrição), alinhar `/acervo`, `/moveis`,
-   `/outdoor`, `/colecoes`, `/colecoes/natal`, `/produto/[slug]` ao layout da prévia.
-5. **Áurea IA**: widget de conversa da prévia; rota `POST /api/aurea` chamando a Claude API no servidor com o prompt mestre
-   (`reference/aurea/conc_kb.js`) + lista de peças públicas; marcadores `[[slug]]`, `[[go:ROTA]]`, `[[wa]]`; fallback local
-   (`reference/aurea/conc_local.js`) quando a API falhar. Salvar conversas e leads (nome, contato, interesse, peças) no Supabase,
-   com limite de taxa por IP.
-6. **Painel**: Leads da Áurea (lista, status, exportar CSV, relatório mensal) e **Orçamentos** de cortinas e persianas
-   (`reference/orcamentos/`, fórmula em `reference/README.md`, conferir 1.074,46 / 2.062,07 / 1.432,76 / 2.507,22),
-   com tabelas `quote_settings`, `quote_fabrics`, `quote_blind_models`, `quotes`, `quote_items` e RLS só para admins.
-   Menu lateral com rolagem própria e fundo azul inteiro (corrigido na V61 da prévia).
-7. **Migração** `0007_aurea_leads_orcamentos.sql`.
+4. **Segredos** (`SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`) só no servidor, nunca com prefixo `NEXT_PUBLIC_`,
+   nunca no repositório.
+5. **Publicação:** nada vai para produção sem aprovação do Gabriel.
 
 Antes de cada entrega: `npm run typecheck && npm run lint && npm test && npm run build`.
-Depois: roteiro de infraestrutura e publicação em `FECHAMENTO.md`.
+Roteiro de infraestrutura: `FECHAMENTO.md`. Pendências de conteúdo do cliente: `PENDING_INFORMATION.md`.
+
+## Pronto (15/10/2026)
+- Site público V62 no Next, com peças do banco (Vitrine/Acervo controlados pelo painel, cache de 5 min).
+- PT/EN/ES, filme de abertura, páginas Sobre, Curadoria, Materiais, Busca, Acervo, Móveis, Outdoor, Coleções, Natal, Produto.
+- Formulário de curadoria → mensagem estruturada no WhatsApp (5548984576227). Botões de WhatsApp conferidos.
+- Painel: produtos, coleções, importações, mídia, fornecedores, tipos, materiais, tags, configurações, ficha de
+  apresentação e **Orçamentos** de cortinas/persianas.
+- Banco: 1.097 peças importadas, 75 públicas, 1 admin; RLS ativo em todas as tabelas; cadastro público desligado;
+  visitante anônimo não lê fornecedores, catálogos, referências de origem nem orçamentos (testado em 15/10/2026).
+- Rodapé com crédito "Experiência digital by VETRA", links de Privacidade e Termos, mapa sem iframe do Google.
+- Página inicial com canonical, Open Graph, Twitter Card e ícone (`src/app/icon.svg`).
+
+## Pendente
+- Domínio oficial: registrar, ligar na Vercel e definir `NEXT_PUBLIC_SITE_URL`.
+- `ANTHROPIC_API_KEY` na Vercel (Production) para a Áurea IA responder com a Claude API.
+- Conferir variáveis de produção na Vercel (o conector Claude/Vercel ainda não tem acesso ao time
+  `vetra-digital-business`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+  `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SHOW_PENDING=false`
+  (sem ela, o padrão do código é mostrar pendências).
+- Áurea IA: salvar conversas e leads no Supabase + tela "Leads da Áurea" no painel (ainda não existe tabela).
+- Aviso de cookies (LGPD): obrigatório antes de ligar GA4/Meta Pixel/GTM; é mudança visual → precisa de autorização.
+- SEO: as páginas internas usam `#/` e não são indexadas separadamente pelo Google (decisão de arquitetura).
+- Supabase: endurecer avisos do linter (search_path das funções, EXECUTE de `is_catalog_admin`/`admin_search_products`,
+  proteção de senha vazada no Auth).
+- Conteúdo do cliente: ver `PENDING_INFORMATION.md` (CNPJ, razão social, e-mail, CEP, datas do Natal, textos legais etc.).
+
+## Contatos
+- Vetra: Gabriel (decisões, aprovação de visual e publicação) e Monique.
+- Casa Áurea: Rafa Müller e Camila Santiago · WhatsApp comercial +55 48 98457-6227 · Instagram @a.casaaurea.
+- E-mail do cliente e do admin do painel: **pendente**.
