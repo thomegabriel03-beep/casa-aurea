@@ -136,6 +136,20 @@ def neutral_photo_names(product_ids: list[str], dry: bool) -> int:
     return n
 
 
+def designer_is_supplier(designer, suppliers) -> bool:
+    d = norm(designer or "")
+    return bool(d) and any(s in d or (len(d) >= 4 and d in s) for s in suppliers)
+
+
+def clean_designer(suppliers: list[str], dry: bool) -> int:
+    rows = page_all("products", {"designer": "not.is.null", "select": "id,designer"})
+    bad = [r["id"] for r in rows if designer_is_supplier(r["designer"], suppliers)]
+    if not dry:
+        for i in range(0, len(bad), 100):
+            sink.rest("PATCH", "products", {"id": f"in.({','.join(bad[i:i + 100])})"}, {"designer": None}, prefer="return=minimal")
+    return len(bad)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
@@ -150,7 +164,7 @@ def main():
         except RuntimeError:
             raise SystemExit("Rode antes a migração supabase/migrations/0008_aurea_leads.sql no Supabase.")
     prods = page_all("products", {"visibility": "eq.internal", "order": "public_code.asc.nullslast,id",
-                                  "select": "id,name,public_code,product_type_id,description,short_description,editorial_description"})
+                                  "select": "id,name,public_code,product_type_id,description,short_description,editorial_description,designer"})
     print(f"{len(prods)} peças internas no banco")
     suppliers = [norm(s["name"]) for s in sink.rest("GET", "suppliers", {"select": "name"}) or [] if len(norm(s["name"])) >= 4]
     media = page_all("product_media", {"is_primary": "eq.true", "status": "eq.active",
@@ -170,7 +184,8 @@ def main():
         nb = bad_name(p.get("name") or "")
         if nb:
             why.append(nb)
-        text = norm(" ".join(filter(None, [p.get("name"), p.get("description"), p.get("short_description"), p.get("editorial_description")])))
+        text = norm(" ".join(filter(None, [p.get("name"), p.get("description"), p.get("short_description"), p.get("editorial_description"),
+                                           None if designer_is_supplier(p.get("designer"), suppliers) else p.get("designer")])))
         if any(s in text for s in suppliers):
             why.append("nome ou texto cita o fornecedor")
         if not p.get("product_type_id") or not p.get("public_code"):
@@ -192,6 +207,10 @@ def main():
         if p["id"] in held_back:
             why.append("deixada de fora na seleção aprovada")
         (review if why else ok).append((p, why))
+
+    # a importação gravou o FORNECEDOR no campo "design" de várias peças: limpa em todas (públicas e internas),
+    # porque esse campo aparece no site e na ficha mostrada ao cliente
+    cleaned = clean_designer(suppliers, a.dry_run)
 
     if not a.dry_run:
         ids = [p["id"] for p, _ in ok]
@@ -218,6 +237,7 @@ def main():
     lines = [f"## Publicar no Acervo{' (teste, nada gravado)' if a.dry_run else ''}",
              f"- **{len(ok)} peças {verb}** no Acervo (página Acervo, busca por descrição e Áurea)",
              f"- **{len(review)} peças continuam internas** para revisar no painel (lista completa na planilha pecas-para-revisar.csv, em Artifacts)",
+             f"- {cleaned} peças {'teriam' if a.dry_run else 'tiveram'} o campo Design limpo (trazia o nome do fornecedor)",
              f"- {renamed} fotos {'receberiam' if a.dry_run else 'receberam'} nome neutro (o nome antigo trazia a página do catálogo)",
              "", "### Por que ficaram de fora (uma peça pode ter mais de um motivo)"]
     lines += [f"- {r}: {n}" for r, n in sorted(reasons.items(), key=lambda x: -x[1])]
