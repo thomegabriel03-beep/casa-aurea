@@ -170,6 +170,8 @@ def main():
     lines += [f"- {p.get('public_code')} · {p.get('name')}" for p, _ in ok[:25]]
     out = "\n".join(lines)
     print(out)
+    if os.environ.get("GITHUB_ACTIONS"):   # resumo também como aviso da execução (legível pela API do GitHub)
+        print(f"::notice title=Publicar no Acervo::" + out[:3500].replace("%", "%25").replace("\r", "").replace("\n", "%0A"))
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as fh:
