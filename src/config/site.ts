@@ -6,7 +6,8 @@
  * e listado em PENDING_INFORMATION.md.
  */
 
-export const SHOW_PENDING = process.env.NEXT_PUBLIC_SHOW_PENDING !== "false";
+/** Notas de conteúdo pendente: só aparecem quando ligadas de propósito (NEXT_PUBLIC_SHOW_PENDING=true). */
+export const SHOW_PENDING = process.env.NEXT_PUBLIC_SHOW_PENDING === "true";
 
 export const site = {
   name: "Casa Áurea",

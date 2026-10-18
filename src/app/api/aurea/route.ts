@@ -88,6 +88,7 @@ export async function POST(req: Request) {
   if (db.lines)
     system.push({
       type: "text",
+      cache_control: { type: "ephemeral" }, // lista grande de peças: lida do cache entre mensagens
       text: (db.linked ? "# PEÇAS PUBLICADAS NO SITE (continuação da lista acima; mesmas regras)\n" : "# MAIS PEÇAS DO SITE (publicadas pela equipe; mesmas regras da lista acima)\n") + db.lines,
     });
 

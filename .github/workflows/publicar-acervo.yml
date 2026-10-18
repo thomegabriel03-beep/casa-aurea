@@ -1,0 +1,35 @@
+name: Publicar peças no Acervo
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "teste = só mostra quantas passam; publicar = publica no Acervo"
+        required: true
+        default: "teste"
+        type: choice
+        options: [teste, publicar]
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Dependências
+        run: pip install -r worker/requirements.txt
+      - name: Publicar no Acervo as peças prontas
+        working-directory: worker
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ "${{ inputs.modo }}" = "publicar" ]; then
+            python -m casa_aurea_import.publish_acervo --csv ../pecas-para-revisar.csv
+          else
+            python -m casa_aurea_import.publish_acervo --dry-run --csv ../pecas-para-revisar.csv
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pecas-para-revisar
+          path: pecas-para-revisar.csv

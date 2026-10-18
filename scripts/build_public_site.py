@@ -103,6 +103,38 @@ new = ("sample=function(input,o){o=o||{};var msgs=input.slice(2).map(function(m)
        ".catch(function(e){if(e&&e.name==='AbortError')throw {code:'cancelled',text:''};throw e})};")
 s = replace_once(s, old, new, 'Áurea')
 
+# 4a. Áurea: a conversa da aba vai para o painel (Leads da Áurea) a cada resposta e quando a
+#     pessoa clica para falar no WhatsApp. Envio em segundo plano: não muda nada na tela.
+s = replace_once(s,
+    "    function save(){try{sessionStorage.setItem('ca-conc',JSON.stringify(turns.slice(-16)))}catch(e){}}\n",
+    "    function save(){try{sessionStorage.setItem('ca-conc',JSON.stringify(turns.slice(-16)))}catch(e){}}\n"
+    "    function newId(){try{if(crypto.randomUUID)return crypto.randomUUID()}catch(e){}var h='';for(var i=0;i<32;i++)h+=Math.floor(Math.random()*16).toString(16);"
+    "return h.slice(0,8)+'-'+h.slice(8,12)+'-4'+h.slice(13,16)+'-'+'89ab'[Math.floor(Math.random()*4)]+h.slice(17,20)+'-'+h.slice(20,32)}\n"
+    "    var CID=null,LOGT=[];try{CID=sessionStorage.getItem('ca-conc-id');LOGT=JSON.parse(sessionStorage.getItem('ca-conc-log')||'[]')||[]}catch(e){}\n"
+    "    if(!CID){CID=newId();try{sessionStorage.setItem('ca-conc-id',CID)}catch(e){}}\n"
+    "    function rec(wa){LOGT=LOGT.slice(-60);try{sessionStorage.setItem('ca-conc-log',JSON.stringify(LOGT))}catch(e){}\n"
+    "      if(!LOGT.length)return;var body=JSON.stringify({id:CID,lang:lg(),turns:LOGT,wa:!!wa});\n"
+    "      try{if(navigator.sendBeacon&&navigator.sendBeacon('/api/aurea/registro',new Blob([body],{type:'application/json'})))return}catch(e){}\n"
+    "      try{fetch('/api/aurea/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:body,keepalive:true}).catch(function(){})}catch(e){}}\n"
+    "    function recNew(){CID=newId();LOGT=[];try{sessionStorage.setItem('ca-conc-id',CID);sessionStorage.removeItem('ca-conc-log')}catch(e){}}\n",
+    'Áurea: registro')
+s = replace_once(s,
+    "turns.push({role:'user',content:q}); bubble('user','<p>'+esc(q)+'</p>'); save();",
+    "turns.push({role:'user',content:q}); LOGT.push({role:'user',content:q}); bubble('user','<p>'+esc(q)+'</p>'); save();",
+    'Áurea: registro da pergunta')
+s = replace_once(s,
+    "var finish=function(t){b.innerHTML=botHTML(t);turns.push({role:'assistant',content:t});save();",
+    "var finish=function(t){b.innerHTML=botHTML(t);turns.push({role:'assistant',content:t});LOGT.push({role:'assistant',content:t});rec();save();",
+    'Áurea: registro da resposta')
+s = replace_once(s,
+    "function wa(){var last=turns.filter(",
+    "function wa(){rec(true);var last=turns.filter(",
+    'Áurea: registro do WhatsApp')
+s = replace_once(s,
+    "if(ctl)ctl.abort();turns=[];save();renderAll()",
+    "if(ctl)ctl.abort();turns=[];save();recNew();renderAll()",
+    'Áurea: nova conversa')
+
 # 4b. mapa do rodapé: fica sempre a arte aprovada (com "Abrir no Google Maps" e "Traçar rota");
 #     o iframe do Google não é injetado por cima dela
 s = replace_once(s, "if(!h||/claude|anthropic|localhost|usercontent/.test(h))return;", "return;", 'mapa')

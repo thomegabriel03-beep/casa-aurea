@@ -2962,6 +2962,14 @@ window.__IMG={"duo":"/site/img/d5350275234539bb.webp","cat_mesas":"/site/img/e3e
     var turns=[], busy=false, ctl=null, sample=null, aiOff=false;
     try{var sv=JSON.parse(sessionStorage.getItem('ca-conc')||'null');if(sv&&sv.length)turns=sv.slice(-16)}catch(e){}
     function save(){try{sessionStorage.setItem('ca-conc',JSON.stringify(turns.slice(-16)))}catch(e){}}
+    function newId(){try{if(crypto.randomUUID)return crypto.randomUUID()}catch(e){}var h='';for(var i=0;i<32;i++)h+=Math.floor(Math.random()*16).toString(16);return h.slice(0,8)+'-'+h.slice(8,12)+'-4'+h.slice(13,16)+'-'+'89ab'[Math.floor(Math.random()*4)]+h.slice(17,20)+'-'+h.slice(20,32)}
+    var CID=null,LOGT=[];try{CID=sessionStorage.getItem('ca-conc-id');LOGT=JSON.parse(sessionStorage.getItem('ca-conc-log')||'[]')||[]}catch(e){}
+    if(!CID){CID=newId();try{sessionStorage.setItem('ca-conc-id',CID)}catch(e){}}
+    function rec(wa){LOGT=LOGT.slice(-60);try{sessionStorage.setItem('ca-conc-log',JSON.stringify(LOGT))}catch(e){}
+      if(!LOGT.length)return;var body=JSON.stringify({id:CID,lang:lg(),turns:LOGT,wa:!!wa});
+      try{if(navigator.sendBeacon&&navigator.sendBeacon('/api/aurea/registro',new Blob([body],{type:'application/json'})))return}catch(e){}
+      try{fetch('/api/aurea/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:body,keepalive:true}).catch(function(){})}catch(e){}}
+    function recNew(){CID=newId();LOGT=[];try{sessionStorage.setItem('ca-conc-id',CID);sessionStorage.removeItem('ca-conc-log')}catch(e){}}
     sample=function(input,o){o=o||{};var msgs=input.slice(2).map(function(m){return {role:m.role,content:String(m.content).slice(0,2000)}});return fetch('/api/aurea',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:msgs,lang:(typeof LANG!=='undefined'?LANG:'pt')}),signal:o.signal}).then(function(r){if(!r.ok)throw {code:r.status===503?'capability_disabled':'http_'+r.status};return r.json()}).then(function(j){if(!j||!j.text)throw {code:'empty'};return {text:j.text}}).catch(function(e){if(e&&e.name==='AbortError')throw {code:'cancelled',text:''};throw e})};
 
     /* ---- conhecimento do site (somente informação pública) ---- */
@@ -3146,9 +3154,9 @@ ps].join('\n');
     function setBusy(b){busy=b;send.hidden=b;stopB.hidden=!b;box.disabled=false;root.classList.toggle('is-busy',b)}
     function ask(q){
       q=String(q||'').trim(); if(!q||busy)return; box.value=''; sugg.hidden=true;
-      turns.push({role:'user',content:q}); bubble('user','<p>'+esc(q)+'</p>'); save();
+      turns.push({role:'user',content:q}); LOGT.push({role:'user',content:q}); bubble('user','<p>'+esc(q)+'</p>'); save();
       var b=bubble('bot','<p class="conc-dots">'+esc(X().think)+'</p>');
-      var finish=function(t){b.innerHTML=botHTML(t);turns.push({role:'assistant',content:t});save();setBusy(false);log.scrollTop=log.scrollHeight};
+      var finish=function(t){b.innerHTML=botHTML(t);turns.push({role:'assistant',content:t});LOGT.push({role:'assistant',content:t});rec();save();setBusy(false);log.scrollTop=log.scrollHeight};
       if(!sample||aiOff){setTimeout(function(){finish(localAnswer(q))},420);setBusy(true);return}
       setBusy(true); ctl=new AbortController();
       var input=[{role:'user',content:kb()},{role:'assistant',content:'Entendido. Sou a Áurea, consultora de interiores da Casa Áurea. Vou entender o ambiente antes de indicar, explicar o porquê de cada peça e seguir todas as regras.'}].concat(turns.slice(-10));
@@ -3166,8 +3174,8 @@ ps].join('\n');
     box.addEventListener('input',function(){box.style.height='auto';box.style.height=Math.min(box.scrollHeight,140)+'px'});
     stopB.addEventListener('click',function(){if(ctl)ctl.abort()});
     sugg.addEventListener('click',function(e){var t=e.target.closest('button');if(t)ask(t.textContent)});
-    root.querySelector('.conc-new').addEventListener('click',function(){if(ctl)ctl.abort();turns=[];save();renderAll()});
-    function wa(){var last=turns.filter(function(t){return t.role==='user'}).slice(-1)[0];openWA('Olá, Casa Áurea. Estava conversando com a Áurea no site'+(last?' sobre: "'+last.content.slice(0,240)+'"':'')+'. Gostaria de falar com a equipe.')}
+    root.querySelector('.conc-new').addEventListener('click',function(){if(ctl)ctl.abort();turns=[];save();recNew();renderAll()});
+    function wa(){rec(true);var last=turns.filter(function(t){return t.role==='user'}).slice(-1)[0];openWA('Olá, Casa Áurea. Estava conversando com a Áurea no site'+(last?' sobre: "'+last.content.slice(0,240)+'"':'')+'. Gostaria de falar com a equipe.')}
     root.addEventListener('click',function(e){
       if(e.target.closest('[data-conc-wa]')){wa();return}
       if(e.target.closest('[data-conc-go]')&&matchMedia('(max-width:767px)').matches)close();

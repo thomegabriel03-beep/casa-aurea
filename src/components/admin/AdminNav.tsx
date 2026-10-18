@@ -6,13 +6,13 @@ import { BrandMark } from "./BrandMark";
 
 const GROUPS: { title?: string; items: [string, string][] }[] = [
   { items: [["/admin", "Dashboard"]] },
-  { title: "Vendas", items: [["/admin/orcamentos", "Orçamentos"]] },
+  { title: "Vendas", items: [["/admin/leads", "Leads da Áurea"], ["/admin/orcamentos", "Orçamentos"]] },
   { title: "Catálogo", items: [["/admin/produtos", "Produtos"], ["/admin/colecoes", "Coleções"], ["/admin/importacoes", "Importações"], ["/admin/midia", "Mídia"]] },
   { title: "Origem", items: [["/admin/fornecedores", "Fornecedores"], ["/admin/catalogos", "Catálogos"]] },
   { title: "Taxonomia", items: [["/admin/tipos", "Tipos e subtipos"], ["/admin/materiais", "Materiais"], ["/admin/acabamentos", "Acabamentos"], ["/admin/tags", "Tags"]] },
   { title: "Sistema", items: [["/admin/configuracoes", "Configurações"]] },
 ];
-const TABBAR: [string, string][] = [["/admin", "Início"], ["/admin/produtos", "Produtos"], ["/admin/orcamentos", "Orçamentos"], ["/admin/colecoes", "Coleções"]];
+const TABBAR: [string, string][] = [["/admin", "Início"], ["/admin/produtos", "Produtos"], ["/admin/leads", "Leads"], ["/admin/orcamentos", "Orçamentos"]];
 
 /** Desktop: barra lateral. Celular: barra superior com menu em gaveta + atalhos fixos no rodapé. */
 export function AdminNav({ footer }: { footer?: React.ReactNode }) {

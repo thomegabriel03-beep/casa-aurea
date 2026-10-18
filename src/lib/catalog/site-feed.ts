@@ -162,7 +162,8 @@ export async function getSiteFeed(): Promise<{ items: SiteItem[]; linked: boolea
       const imgs = (gm.get(id) ?? [])
         .filter((m) => m.type !== "video" && m.url)
         .sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0))
-        .map((m) => m.url as string);
+        .map((m) => m.url as string)
+        .slice(0, 8); // galeria do site: até 8 fotos por peça (a página inicial leva a lista inteira)
       if (!imgs.length) return null; // sem foto a peça não aparece no site
       const typeCode = p.type_code as string, typeName = (p.type_name as string) || typeCode;
       const sub = (p.subtype_name as string) || null;
