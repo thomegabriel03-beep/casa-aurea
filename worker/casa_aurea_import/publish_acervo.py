@@ -58,6 +58,11 @@ OK_TRIPLE = {"str", "spr", "scr", "spl", "nch", "rch", "tch", "ngl", "ndr", "ntr
 BAD_DOUBLE = re.compile(r"(kk|ww|jj|qq|yy|hh|vv|xx|aa|ii|uu)")
 
 
+GENERIC = {"aparador", "buffet", "rack", "mesa", "cadeira", "poltrona", "sofa", "banqueta", "banco", "puff", "puf", "cama",
+           "comoda", "estante", "gaveteiro", "balanco", "espreguicadeira", "ombrelone", "tapete", "mesa lateral",
+           "mesa de centro", "mesa de jantar", "cristaleira", "cabideiro", "carrinho", "bar", "side", "mesa de apoio"}
+
+
 def odd_word(w: str) -> bool:
     """Palavra com cara de leitura errada do PDF (letras de fonte decorativa trocadas)."""
     w = norm(w)
@@ -90,6 +95,10 @@ def bad_name(name: str) -> str | None:
         return "nome quebrado na importação"
     if any(odd_word(w) for w in n.split()):
         return "nome com cara de erro de leitura (conferir)"
+    if re.search(r"\d{3,}", n):
+        return "nome com número de catálogo do fornecedor"
+    if norm(n) in GENERIC:
+        return "nome genérico (só o tipo da peça)"
     return None
 
 
@@ -132,7 +141,7 @@ def main():
             why.append("sem foto principal")
         else:
             if m.get("quality") != "CATALOG_READY":
-                why.append("foto principal com qualidade baixa")
+                why.append(f"foto principal com qualidade baixa ({m.get('quality') or 'sem nota'})")
             if m.get("has_text"):
                 why.append("foto com texto do catálogo")
             if m.get("watermark"):
