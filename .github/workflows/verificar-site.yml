@@ -1,0 +1,25 @@
+name: Conferir o site no ar
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: "endereço do site"
+        required: true
+        default: "https://casa-aurea-one.vercel.app"
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Dependências
+        run: pip install -r worker/requirements.txt
+      - name: Conferir
+        working-directory: worker
+        env:
+          SITE: ${{ inputs.site }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python -m casa_aurea_import.check_site
