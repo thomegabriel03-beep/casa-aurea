@@ -54,6 +54,14 @@ def main():
     low = norm(html)
     leaked = [s for s in sup if s in low]
     line(not leaked, "nenhum nome de fornecedor no site" + (f" (achei: {', '.join(leaked[:3])})" if leaked else ""))
+    for s_ in leaked[:3]:
+        for it in items:
+            hits = [k for k, v in it.items() if s_ in norm(json.dumps(v, ensure_ascii=False))]
+            if hits:
+                out.append(f"  - {it.get('c')} · {it.get('n')}: campo(s) {', '.join(hits)}")
+        if not any(s_ in norm(json.dumps(it, ensure_ascii=False)) for it in items):
+            i = low.find(s_)
+            out.append(f"  - fora das peças: …{low[max(0, i - 80):i + 40]}…")
     line("/original/" not in html, "nenhuma foto com nome de página de catálogo")
 
     st, body = http("POST", "/api/aurea", {"messages": [{"role": "user", "content": "Oi! Qual o horário do showroom?"}], "lang": "pt"})
