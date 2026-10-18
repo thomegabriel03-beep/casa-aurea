@@ -1820,7 +1820,7 @@ html.admin-on body>*:not(#admRoot):not(svg){visibility:hidden}
 .ph-fit{background:#fff}
 .ph:has(> img.fit){background:#fff}
 .specs dd{white-space:pre-line}
-#ptoggle{display:none!important}</style>
+.conc-cam{width:38px;height:38px;flex:none;border-radius:50%;border:1px solid rgb(239 232 221/.25);color:#efe8dd;display:grid;place-items:center;transition:border-color .2s,color .2s}.conc-cam:hover,.conc-cam:focus-visible{border-color:#cfae82;color:#cfae82}.conc-cam svg{width:20px;height:20px}.conc-form:has(.conc-cam){padding-left:.4rem}.conc.is-busy .conc-cam{opacity:.4;pointer-events:none}.conc-att{display:flex;align-items:center;gap:.6rem;margin:0 var(--s4) var(--s2);padding:.4rem .5rem;border:1px solid rgb(239 232 221/.2);border-radius:14px;color:#efe8dd;font-size:.8rem}.conc-att[hidden]{display:none}.conc-att img{width:44px;height:44px;object-fit:cover;border-radius:8px}.conc-att span{flex:1}.conc-att-x{width:30px;height:30px;display:grid;place-items:center;color:#efe8dd;border-radius:50%}.conc-att-x svg{width:16px;height:16px}.conc-photo{display:block;max-width:200px;width:100%;border-radius:12px;margin-bottom:.4rem}.conc-photo-x{font-size:.8rem;opacity:.7}#ptoggle{display:none!important}</style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -2221,7 +2221,7 @@ html.admin-on body>*:not(#admRoot):not(svg){visibility:hidden}
   </div>
   <div class="conc-log" role="log" aria-live="polite" data-lenis-prevent></div>
   <div class="conc-sugg"></div>
-  <form class="conc-form"><textarea class="conc-in" rows="1" placeholder="Pergunte qualquer coisa…" aria-label="Mensagem para a Áurea"></textarea><button type="submit" class="conc-send" aria-label="Enviar"><svg aria-hidden="true"><use href="#arrow"/></svg></button><button type="button" class="conc-stop" hidden>Parar</button></form>
+  <div class="conc-att" hidden></div><form class="conc-form"><button type="button" class="conc-cam" aria-label="Enviar foto do ambiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3.5 8.5h3.2l1.6-2.3h7.4l1.6 2.3h3.2v10.3h-17z"/><circle cx="12" cy="13.4" r="3.4"/></svg></button><input type="file" class="conc-file" accept="image/*" hidden><textarea class="conc-in" rows="1" placeholder="Pergunte qualquer coisa…" aria-label="Mensagem para a Áurea"></textarea><button type="submit" class="conc-send" aria-label="Enviar"><svg aria-hidden="true"><use href="#arrow"/></svg></button><button type="button" class="conc-stop" hidden>Parar</button></form>
   <p class="conc-foot"><button type="button" class="conc-new">Nova conversa</button><span>Respostas geradas por IA · valores e prazos são confirmados pela equipe</span></p>
 </aside>
 <dialog id="lead" aria-labelledby="lead-t">
@@ -2948,6 +2948,17 @@ window.__IMG={"duo":"/site/img/d5350275234539bb.webp","cat_mesas":"/site/img/e3e
     var root=document.getElementById('conc'); if(!root)return;
     var log=root.querySelector('.conc-log'), form=root.querySelector('.conc-form'), box=root.querySelector('.conc-in'), send=root.querySelector('.conc-send'), stopB=root.querySelector('.conc-stop');
     var sugg=root.querySelector('.conc-sugg');
+    var cam=root.querySelector('.conc-cam'),fileIn=root.querySelector('.conc-file'),att=root.querySelector('.conc-att'),PHOTOS={},PIMG=null;
+    var CAMT={pt:['Foto do ambiente','Remover foto','O que quer mudar? (opcional)','Recebi sua foto! Para analisar o seu ambiente com calma, a equipe pode olhar com você pelo WhatsApp [[wa]] ou no showroom.','Não consegui abrir essa imagem. Tente outra foto (JPG ou PNG).'],
+      en:['Room photo','Remove photo','What to change? (optional)','Got your photo! To look at your space properly, the team can go through it with you on WhatsApp [[wa]] or at the showroom.','I could not open that image. Try another photo (JPG or PNG).'],
+      es:['Foto del ambiente','Quitar foto','¿Qué quieres cambiar? (opcional)','¡Recibí tu foto! Para analizar tu espacio con calma, el equipo puede verlo contigo por WhatsApp [[wa]] o en el showroom.','No pude abrir esa imagen. Prueba con otra foto (JPG o PNG).']};
+    function CT(i){return (CAMT[lg()]||CAMT.pt)[i]}
+    function shrink(f,cb){var u=URL.createObjectURL(f),im=new Image();im.onload=function(){var k=Math.min(1,1280/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.naturalWidth*k));c.height=Math.max(1,Math.round(im.naturalHeight*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);try{cb(c.toDataURL('image/jpeg',.82))}catch(e){cb(null)}};im.onerror=function(){URL.revokeObjectURL(u);cb(null)};im.src=u}
+    function showAtt(){if(!PIMG){att.hidden=true;att.innerHTML='';box.placeholder=X().ph;return}att.hidden=false;att.innerHTML='<img src="'+PIMG+'" alt="'+esc(CT(0))+'"><span>'+esc(CT(0))+'</span><button type="button" class="conc-att-x" aria-label="'+esc(CT(1))+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>';box.placeholder=CT(2)}
+    cam.addEventListener('click',function(){if(!busy)fileIn.click()});
+    fileIn.addEventListener('change',function(){var f=fileIn.files&&fileIn.files[0];fileIn.value='';if(!f)return;shrink(f,function(d){if(!d||d.length>1500000){bubble('bot','<p>'+esc(CT(4))+'</p>');return}PIMG=d;showAtt();box.focus()})});
+    att.addEventListener('click',function(e){if(e.target.closest('.conc-att-x')){PIMG=null;showAtt()}});
+    function userHTML(t){var ph=t.pid&&PHOTOS[t.pid];return (ph?'<img class="conc-photo" src="'+ph+'" alt="'+esc(CT(0))+'">':(t.pid?'<p class="conc-photo-x">'+esc(CT(0))+'</p>':''))+(t.content?'<p>'+esc(t.content)+'</p>':'')}
     var HOURS='Seg. a sex. 9h–12h e 13h30–19h; sábado 9h–13h';
     var ADDR='Av. Valério Gomes, 42 · Centro, Tijucas — SC';
     var MAPS='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('Av. Valério Gomes, 42 - Centro, Tijucas - SC');
@@ -2970,7 +2981,7 @@ window.__IMG={"duo":"/site/img/d5350275234539bb.webp","cat_mesas":"/site/img/e3e
       try{if(navigator.sendBeacon&&navigator.sendBeacon('/api/aurea/registro',new Blob([body],{type:'application/json'})))return}catch(e){}
       try{fetch('/api/aurea/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:body,keepalive:true}).catch(function(){})}catch(e){}}
     function recNew(){CID=newId();LOGT=[];try{sessionStorage.setItem('ca-conc-id',CID);sessionStorage.removeItem('ca-conc-log')}catch(e){}}
-    sample=function(input,o){o=o||{};var msgs=input.slice(2).map(function(m){return {role:m.role,content:String(m.content).slice(0,2000)}});return fetch('/api/aurea',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:msgs,lang:(typeof LANG!=='undefined'?LANG:'pt')}),signal:o.signal}).then(function(r){if(!r.ok)throw {code:r.status===503?'capability_disabled':'http_'+r.status};return r.json()}).then(function(j){if(!j||!j.text)throw {code:'empty'};return {text:j.text}}).catch(function(e){if(e&&e.name==='AbortError')throw {code:'cancelled',text:''};throw e})};
+    sample=function(input,o){o=o||{};var msgs=input.slice(2).map(function(m){var x={role:m.role,content:String(m.content).slice(0,2000)};if(m.pid&&PHOTOS[m.pid])x.image=PHOTOS[m.pid];return x});return fetch('/api/aurea',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:msgs,lang:(typeof LANG!=='undefined'?LANG:'pt')}),signal:o.signal}).then(function(r){if(!r.ok)throw {code:r.status===503?'capability_disabled':'http_'+r.status};return r.json()}).then(function(j){if(!j||!j.text)throw {code:'empty'};return {text:j.text}}).catch(function(e){if(e&&e.name==='AbortError')throw {code:'cancelled',text:''};throw e})};
 
     /* ---- conhecimento do site (somente informação pública) ---- */
     function vmax(p){return (p.variants||[]).reduce(function(m,v){return Math.max(m,+v.width||+v.diameter||0)},0)}
@@ -3066,7 +3077,7 @@ ps].join('\n');
     function botHTML(t){var o=parse(t);return (o.text?'<p>'+md(o.text)+'</p>':'')+cards(o.slugs)+acts(o)}
     function renderAll(){
       log.innerHTML='';bubble('bot','<p>'+esc(X().hi)+'</p>');
-      turns.forEach(function(t){bubble(t.role==='user'?'user':'bot',t.role==='user'?'<p>'+esc(t.content)+'</p>':botHTML(t.content))});
+      turns.forEach(function(t){bubble(t.role==='user'?'user':'bot',t.role==='user'?userHTML(t):botHTML(t.content))});
       sugg.hidden=turns.length>0; sugg.innerHTML=X().s.map(function(q){return '<button type="button">'+esc(q)+'</button>'}).join('');
       box.placeholder=X().ph; stopB.textContent=X().stop; root.querySelector('.conc-new').textContent=X().clear; root.querySelector('.conc-wa-top').setAttribute('aria-label',X().wa);
     }
@@ -3153,11 +3164,13 @@ ps].join('\n');
     /* ---- conversa ---- */
     function setBusy(b){busy=b;send.hidden=b;stopB.hidden=!b;box.disabled=false;root.classList.toggle('is-busy',b)}
     function ask(q){
-      q=String(q||'').trim(); if(!q||busy)return; box.value=''; sugg.hidden=true;
-      turns.push({role:'user',content:q}); LOGT.push({role:'user',content:q}); bubble('user','<p>'+esc(q)+'</p>'); save();
+      q=String(q||'').trim(); if((!q&&!PIMG)||busy)return; box.value=''; sugg.hidden=true;
+      var pid=null;if(PIMG){pid='f'+Date.now();PHOTOS[pid]=PIMG;PIMG=null;showAtt()}
+      var ut={role:'user',content:q};if(pid)ut.pid=pid;
+      turns.push(ut); LOGT.push({role:'user',content:(pid?'[enviou uma foto do ambiente] ':'')+q}); bubble('user',userHTML(ut)); save();
       var b=bubble('bot','<p class="conc-dots">'+esc(X().think)+'</p>');
       var finish=function(t){b.innerHTML=botHTML(t);turns.push({role:'assistant',content:t});LOGT.push({role:'assistant',content:t});rec();save();setBusy(false);log.scrollTop=log.scrollHeight};
-      if(!sample||aiOff){setTimeout(function(){finish(localAnswer(q))},420);setBusy(true);return}
+      if(!sample||aiOff){setTimeout(function(){finish(pid&&!q?CT(3):localAnswer(q))},420);setBusy(true);return}
       setBusy(true); ctl=new AbortController();
       var input=[{role:'user',content:kb()},{role:'assistant',content:'Entendido. Sou a Áurea, consultora de interiores da Casa Áurea. Vou entender o ambiente antes de indicar, explicar o porquê de cada peça e seguir todas as regras.'}].concat(turns.slice(-10));
       sample(input,{cache:false,modelTier:'quick',signal:ctl.signal,onText:function(u){var o=parse(u.text);b.innerHTML=(o.text?'<p>'+md(o.text)+'</p>':'');log.scrollTop=log.scrollHeight}})
@@ -3166,7 +3179,7 @@ ps].join('\n');
           var c=e&&e.code;
           if(c==='cancelled'){var t=e.text||'';if(t){finish(t)}else{b.remove();turns.pop();save();setBusy(false)}return}
           if(/not_granted|sampling_disabled|not_declared|capability_disabled|capability_removed|session_expired|refused|tools_unavailable/.test(c||''))aiOff=true;
-          finish(localAnswer(q));
+          finish(pid&&!q?CT(3):localAnswer(q));
         });
     }
     form.addEventListener('submit',function(e){e.preventDefault();ask(box.value)});
@@ -3174,7 +3187,7 @@ ps].join('\n');
     box.addEventListener('input',function(){box.style.height='auto';box.style.height=Math.min(box.scrollHeight,140)+'px'});
     stopB.addEventListener('click',function(){if(ctl)ctl.abort()});
     sugg.addEventListener('click',function(e){var t=e.target.closest('button');if(t)ask(t.textContent)});
-    root.querySelector('.conc-new').addEventListener('click',function(){if(ctl)ctl.abort();turns=[];save();recNew();renderAll()});
+    root.querySelector('.conc-new').addEventListener('click',function(){if(ctl)ctl.abort();turns=[];PHOTOS={};PIMG=null;showAtt();save();recNew();renderAll()});
     function wa(){rec(true);var last=turns.filter(function(t){return t.role==='user'}).slice(-1)[0];openWA('Olá, Casa Áurea. Estava conversando com a Áurea no site'+(last?' sobre: "'+last.content.slice(0,240)+'"':'')+'. Gostaria de falar com a equipe.')}
     root.addEventListener('click',function(e){
       if(e.target.closest('[data-conc-wa]')){wa();return}

@@ -72,6 +72,23 @@ def main():
     else:
         line(False, f"Áurea com erro na IA (HTTP {st}): conferir a chave na Vercel")
 
+    # foto do ambiente: uma "sala" desenhada (parede clara, piso de madeira, sofá cinza)
+    try:
+        import base64, io
+        from PIL import Image, ImageDraw
+        im = Image.new("RGB", (800, 600), (236, 228, 214))
+        d = ImageDraw.Draw(im)
+        d.rectangle([0, 430, 800, 600], fill=(150, 108, 70))
+        d.rectangle([180, 300, 620, 440], fill=(120, 120, 124))
+        d.rectangle([520, 80, 700, 300], outline=(90, 90, 90), width=6)
+        buf = io.BytesIO(); im.save(buf, "JPEG", quality=80)
+        img = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+        st, body = http("POST", "/api/aurea", {"messages": [{"role": "user", "content": "Essa é minha sala, o que você sugere?", "image": img}], "lang": "pt"})
+        txt = json.loads(body).get("text", "") if st == 200 else ""
+        line(st == 200 and len(txt) > 20, "Áurea analisa foto do ambiente" + (f": “{txt[:160]}…”" if txt else f" (HTTP {st})"))
+    except Exception as e:  # noqa: BLE001
+        line(False, f"teste da foto falhou: {e}")
+
     cid = str(uuid.uuid4())
     turns = [{"role": "user", "content": "Teste automático da Vetra, pode ignorar. Meu nome é Teste Vetra, (48) 90000-0000"},
              {"role": "assistant", "content": "Recebido."}]

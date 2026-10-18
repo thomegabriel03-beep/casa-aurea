@@ -96,7 +96,7 @@ s = re.sub(r'<div id="admRoot"[^>]*>\s*</div>', '', s, count=1)
 # 4. Áurea: IA pelo servidor (/api/aurea). O servidor guarda o conhecimento do site;
 #    o navegador envia só a conversa.
 old = "if(window.claude&&claude.use)claude.use('sample').then(function(s){sample=s}).catch(function(){});"
-new = ("sample=function(input,o){o=o||{};var msgs=input.slice(2).map(function(m){return {role:m.role,content:String(m.content).slice(0,2000)}});"
+new = ("sample=function(input,o){o=o||{};var msgs=input.slice(2).map(function(m){var x={role:m.role,content:String(m.content).slice(0,2000)};if(m.pid&&PHOTOS[m.pid])x.image=PHOTOS[m.pid];return x});"
        "return fetch('/api/aurea',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:msgs,lang:(typeof LANG!=='undefined'?LANG:'pt')}),signal:o.signal})"
        ".then(function(r){if(!r.ok)throw {code:r.status===503?'capability_disabled':'http_'+r.status};return r.json()})"
        ".then(function(j){if(!j||!j.text)throw {code:'empty'};return {text:j.text}})"
@@ -134,6 +134,70 @@ s = replace_once(s,
     "if(ctl)ctl.abort();turns=[];save();renderAll()",
     "if(ctl)ctl.abort();turns=[];save();recNew();renderAll()",
     'Áurea: nova conversa')
+
+# 4c. Áurea: foto do ambiente (aprovado pelo Gabriel em 18/10/2026). Botão de câmera no campo da conversa;
+#     a foto é reduzida no navegador (1280 px), vai para a IA junto com a mensagem e não é guardada.
+s = replace_once(s,
+    '<form class="conc-form"><textarea class="conc-in"',
+    '<div class="conc-att" hidden></div><form class="conc-form">'
+    '<button type="button" class="conc-cam" aria-label="Enviar foto do ambiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">'
+    '<path d="M3.5 8.5h3.2l1.6-2.3h7.4l1.6 2.3h3.2v10.3h-17z"/><circle cx="12" cy="13.4" r="3.4"/></svg></button>'
+    '<input type="file" class="conc-file" accept="image/*" hidden><textarea class="conc-in"',
+    'Áurea: botão de foto')
+s = replace_once(s,
+    "    var sugg=root.querySelector('.conc-sugg');\n",
+    "    var sugg=root.querySelector('.conc-sugg');\n"
+    "    var cam=root.querySelector('.conc-cam'),fileIn=root.querySelector('.conc-file'),att=root.querySelector('.conc-att'),PHOTOS={},PIMG=null;\n"
+    "    var CAMT={pt:['Foto do ambiente','Remover foto','O que quer mudar? (opcional)','Recebi sua foto! Para analisar o seu ambiente com calma, a equipe pode olhar com você pelo WhatsApp [[wa]] ou no showroom.','Não consegui abrir essa imagem. Tente outra foto (JPG ou PNG).'],\n"
+    "      en:['Room photo','Remove photo','What to change? (optional)','Got your photo! To look at your space properly, the team can go through it with you on WhatsApp [[wa]] or at the showroom.','I could not open that image. Try another photo (JPG or PNG).'],\n"
+    "      es:['Foto del ambiente','Quitar foto','¿Qué quieres cambiar? (opcional)','¡Recibí tu foto! Para analizar tu espacio con calma, el equipo puede verlo contigo por WhatsApp [[wa]] o en el showroom.','No pude abrir esa imagen. Prueba con otra foto (JPG o PNG).']};\n"
+    "    function CT(i){return (CAMT[lg()]||CAMT.pt)[i]}\n"
+    "    function shrink(f,cb){var u=URL.createObjectURL(f),im=new Image();im.onload=function(){var k=Math.min(1,1280/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');"
+    "c.width=Math.max(1,Math.round(im.naturalWidth*k));c.height=Math.max(1,Math.round(im.naturalHeight*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);"
+    "try{cb(c.toDataURL('image/jpeg',.82))}catch(e){cb(null)}};im.onerror=function(){URL.revokeObjectURL(u);cb(null)};im.src=u}\n"
+    "    function showAtt(){if(!PIMG){att.hidden=true;att.innerHTML='';box.placeholder=X().ph;return}att.hidden=false;"
+    "att.innerHTML='<img src=\"'+PIMG+'\" alt=\"'+esc(CT(0))+'\"><span>'+esc(CT(0))+'</span><button type=\"button\" class=\"conc-att-x\" aria-label=\"'+esc(CT(1))+'\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\"/></svg></button>';"
+    "box.placeholder=CT(2)}\n"
+    "    cam.addEventListener('click',function(){if(!busy)fileIn.click()});\n"
+    "    fileIn.addEventListener('change',function(){var f=fileIn.files&&fileIn.files[0];fileIn.value='';if(!f)return;"
+    "shrink(f,function(d){if(!d||d.length>1500000){bubble('bot','<p>'+esc(CT(4))+'</p>');return}PIMG=d;showAtt();box.focus()})});\n"
+    "    att.addEventListener('click',function(e){if(e.target.closest('.conc-att-x')){PIMG=null;showAtt()}});\n"
+    "    function userHTML(t){var ph=t.pid&&PHOTOS[t.pid];return (ph?'<img class=\"conc-photo\" src=\"'+ph+'\" alt=\"'+esc(CT(0))+'\">':(t.pid?'<p class=\"conc-photo-x\">'+esc(CT(0))+'</p>':''))+(t.content?'<p>'+esc(t.content)+'</p>':'')}\n",
+    'Áurea: lógica da foto')
+s = replace_once(s,
+    "      q=String(q||'').trim(); if(!q||busy)return; box.value=''; sugg.hidden=true;\n"
+    "      turns.push({role:'user',content:q}); LOGT.push({role:'user',content:q}); bubble('user','<p>'+esc(q)+'</p>'); save();",
+    "      q=String(q||'').trim(); if((!q&&!PIMG)||busy)return; box.value=''; sugg.hidden=true;\n"
+    "      var pid=null;if(PIMG){pid='f'+Date.now();PHOTOS[pid]=PIMG;PIMG=null;showAtt()}\n"
+    "      var ut={role:'user',content:q};if(pid)ut.pid=pid;\n"
+    "      turns.push(ut); LOGT.push({role:'user',content:(pid?'[enviou uma foto do ambiente] ':'')+q}); bubble('user',userHTML(ut)); save();",
+    'Áurea: pergunta com foto')
+s = replace_once(s,
+    "      if(!sample||aiOff){setTimeout(function(){finish(localAnswer(q))},420);setBusy(true);return}",
+    "      if(!sample||aiOff){setTimeout(function(){finish(pid&&!q?CT(3):localAnswer(q))},420);setBusy(true);return}",
+    'Áurea: foto sem IA')
+s = replace_once(s,
+    "          finish(localAnswer(q));\n        });",
+    "          finish(pid&&!q?CT(3):localAnswer(q));\n        });",
+    'Áurea: foto com erro na IA')
+s = replace_once(s,
+    "turns.forEach(function(t){bubble(t.role==='user'?'user':'bot',t.role==='user'?'<p>'+esc(t.content)+'</p>':botHTML(t.content))});",
+    "turns.forEach(function(t){bubble(t.role==='user'?'user':'bot',t.role==='user'?userHTML(t):botHTML(t.content))});",
+    'Áurea: conversa salva com foto')
+s = replace_once(s,
+    "if(ctl)ctl.abort();turns=[];save();recNew();renderAll()",
+    "if(ctl)ctl.abort();turns=[];PHOTOS={};PIMG=null;showAtt();save();recNew();renderAll()",
+    'Áurea: nova conversa sem foto')
+CAM_CSS = (
+    '.conc-cam{width:38px;height:38px;flex:none;border-radius:50%;border:1px solid rgb(239 232 221/.25);color:#efe8dd;display:grid;place-items:center;transition:border-color .2s,color .2s}'
+    '.conc-cam:hover,.conc-cam:focus-visible{border-color:#cfae82;color:#cfae82}.conc-cam svg{width:20px;height:20px}'
+    '.conc-form:has(.conc-cam){padding-left:.4rem}.conc.is-busy .conc-cam{opacity:.4;pointer-events:none}'
+    '.conc-att{display:flex;align-items:center;gap:.6rem;margin:0 var(--s4) var(--s2);padding:.4rem .5rem;border:1px solid rgb(239 232 221/.2);border-radius:14px;color:#efe8dd;font-size:.8rem}'
+    '.conc-att[hidden]{display:none}.conc-att img{width:44px;height:44px;object-fit:cover;border-radius:8px}.conc-att span{flex:1}'
+    '.conc-att-x{width:30px;height:30px;display:grid;place-items:center;color:#efe8dd;border-radius:50%}.conc-att-x svg{width:16px;height:16px}'
+    '.conc-photo{display:block;max-width:200px;width:100%;border-radius:12px;margin-bottom:.4rem}.conc-photo-x{font-size:.8rem;opacity:.7}'
+)
+s = s.replace('</style>', CAM_CSS + '</style>', 1)
 
 # 4b. mapa do rodapé: fica sempre a arte aprovada (com "Abrir no Google Maps" e "Traçar rota");
 #     o iframe do Google não é injetado por cima dela
