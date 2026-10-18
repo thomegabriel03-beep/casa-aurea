@@ -6,7 +6,7 @@
 Uma peça só vai para o site se tiver TUDO isto:
 - nome de verdade (não vazio, não letras soltas como "T O O Le") e sem nome de fornecedor;
 - tipo confirmado e código Casa Áurea;
-- foto principal ativa com nota CATALOG_READY, sem texto e sem marca d'água;
+- foto principal ativa boa (CATALOG_READY, ou DETAIL_ACCEPTABLE a partir de 600 px), sem texto e sem marca d'água;
 - nenhuma suspeita de duplicidade em aberto;
 - não ter sido deixada de fora de propósito na seleção aprovada do site.
 As demais continuam internas e saem numa planilha (pecas-para-revisar.csv) com o motivo,
@@ -115,7 +115,7 @@ def main():
     print(f"{len(prods)} peças internas no banco")
     suppliers = [norm(s["name"]) for s in sink.rest("GET", "suppliers", {"select": "name"}) or [] if len(norm(s["name"])) >= 4]
     media = page_all("product_media", {"is_primary": "eq.true", "status": "eq.active",
-                                       "select": "product_id,quality,has_text,watermark,type"})
+                                       "select": "product_id,quality,has_text,watermark,type,width,height"})
     prim = {m["product_id"]: m for m in media}
     flags = page_all("product_quality_flags", {"flag": "eq.possibleDuplicate", "resolved": "eq.false", "select": "product_id"})
     dup = {f["product_id"] for f in flags}
@@ -140,7 +140,9 @@ def main():
         if not m:
             why.append("sem foto principal")
         else:
-            if m.get("quality") != "CATALOG_READY":
+            long_side = max(m.get("width") or 0, m.get("height") or 0)
+            # Acervo aceita foto limpa a partir de 600 px (DETAIL_ACCEPTABLE); a vitrine segue com as aprovadas
+            if not (m.get("quality") == "CATALOG_READY" or (m.get("quality") == "DETAIL_ACCEPTABLE" and long_side >= 600)):
                 why.append(f"foto principal com qualidade baixa ({m.get('quality') or 'sem nota'})")
             if m.get("has_text"):
                 why.append("foto com texto do catálogo")
