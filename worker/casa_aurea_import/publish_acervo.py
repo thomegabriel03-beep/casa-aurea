@@ -17,9 +17,11 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import os
 import re
+import urllib.parse
 
 from . import sink
 from .classify import norm
@@ -102,6 +104,38 @@ def bad_name(name: str) -> str | None:
     return None
 
 
+ORIGINAL = re.compile(r"/storage/v1/object/public/produtos/([0-9a-f-]{36})/original/([^?]+)$")
+
+
+def neutral_photo_names(product_ids: list[str], dry: bool) -> int:
+    """As fotos importadas guardam no nome do arquivo a página do catálogo (ex.: p050-o415.webp).
+    Para o site público não revelar a origem, cada foto dessas peças ganha um nome neutro."""
+    n = 0
+    for i in range(0, len(product_ids), 80):
+        chunk = product_ids[i:i + 80]
+        rows = sink.rest("GET", "product_media", {"product_id": f"in.({','.join(chunk)})", "url": "like.*/original/*", "select": "id,url"}) or []
+        for r in rows:
+            m = ORIGINAL.search(r["url"])
+            if not m:
+                continue
+            n += 1
+            if dry:
+                continue
+            pid, fname = m.group(1), urllib.parse.unquote(m.group(2))
+            ext = os.path.splitext(fname)[1].lower() or ".webp"
+            dest = f"{pid}/m/{hashlib.sha1(f'{pid}/{fname}'.encode()).hexdigest()[:16]}{ext}"
+            try:
+                sink._req("POST", f"{sink.URL}/storage/v1/object/copy",
+                          {"bucketId": "produtos", "sourceKey": f"{pid}/original/{fname}", "destinationKey": dest})
+            except RuntimeError as e:
+                if "exists" not in str(e).lower() and "409" not in str(e):
+                    print(f"  aviso: não renomeei {fname}: {str(e)[:120]}")
+                    continue
+            new_url = f"{sink.URL}/storage/v1/object/public/produtos/{urllib.parse.quote(dest)}"
+            sink.rest("PATCH", "product_media", {"id": f"eq.{r['id']}"}, {"url": new_url}, prefer="return=minimal")
+    return n
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
@@ -110,6 +144,11 @@ def main():
     if not sink.URL or not sink.KEY:
         raise SystemExit("Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY.")
 
+    if not a.dry_run:
+        try:   # a migração 0008 também limpa as fotos que o site recebe; sem ela, não publica
+            sink.rest("GET", "aurea_conversations", {"select": "id", "limit": "1"})
+        except RuntimeError:
+            raise SystemExit("Rode antes a migração supabase/migrations/0008_aurea_leads.sql no Supabase.")
     prods = page_all("products", {"visibility": "eq.internal", "order": "public_code.asc.nullslast,id",
                                   "select": "id,name,public_code,product_type_id,description,short_description,editorial_description"})
     print(f"{len(prods)} peças internas no banco")
@@ -161,6 +200,10 @@ def main():
             sink.rest("PATCH", "products", {"id": f"in.({','.join(chunk)})", "visibility": "eq.internal"},
                       {"visibility": "public", "curation_tier": "archive", "status": "active"}, prefer="return=minimal")
 
+    # nomes neutros nas fotos de todas as peças públicas (as recém-publicadas e as que já estavam no site)
+    public_ids = [p["id"] for p in page_all("products", {"visibility": "eq.public", "select": "id"})]
+    renamed = neutral_photo_names(public_ids + ([p["id"] for p, _ in ok] if a.dry_run else []), a.dry_run)
+
     with open(a.csv, "w", newline="", encoding="utf-8-sig") as fh:
         w = csv.writer(fh, delimiter=";")
         w.writerow(["Código", "Nome", "Motivo"])
@@ -175,6 +218,7 @@ def main():
     lines = [f"## Publicar no Acervo{' (teste, nada gravado)' if a.dry_run else ''}",
              f"- **{len(ok)} peças {verb}** no Acervo (página Acervo, busca por descrição e Áurea)",
              f"- **{len(review)} peças continuam internas** para revisar no painel (lista completa na planilha pecas-para-revisar.csv, em Artifacts)",
+             f"- {renamed} fotos {'receberiam' if a.dry_run else 'receberam'} nome neutro (o nome antigo trazia a página do catálogo)",
              "", "### Por que ficaram de fora (uma peça pode ter mais de um motivo)"]
     lines += [f"- {r}: {n}" for r, n in sorted(reasons.items(), key=lambda x: -x[1])]
     lines += ["", f"### Exemplos que {'seriam publicados' if a.dry_run else 'foram publicados'}"]

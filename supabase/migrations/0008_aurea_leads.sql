@@ -85,3 +85,15 @@ do $$ declare f record; begin
     execute format('alter function %s set search_path = public, extensions, pg_catalog', f.sig);
   end loop;
 end $$;
+
+-- ---------------------------------------------------------------------
+-- 4. Privacidade das fotos: o site só recebe fotos limpas
+--    (sem texto do catálogo, sem marca d'água, com nota boa). As demais continuam no painel.
+-- ---------------------------------------------------------------------
+create or replace view public_product_media as
+select m.product_id, m.type, m.url, m.alt, m.width, m.height, m.focal_point, m.poster_url, m.sort_order, m.is_primary
+from product_media m join products p on p.id = m.product_id
+where p.visibility = 'public' and m.status = 'active'
+  and coalesce(m.has_text, false) = false
+  and coalesce(m.watermark, false) = false
+  and coalesce(m.quality, 'CATALOG_READY') in ('CATALOG_READY', 'DETAIL_ACCEPTABLE');
