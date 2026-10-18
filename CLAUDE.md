@@ -56,15 +56,16 @@ Roteiro de infraestrutura: `FECHAMENTO.md`. Pendências de conteúdo do cliente:
   painel `/admin/leads` (status, anotações, conversa, CSV em `/admin/leads-csv`, relatório mensal).
 - (18/10) Ação "Publicar peças no Acervo" (`worker/casa_aurea_import/publish_acervo.py`): publica só peças prontas
   (nome válido, tipo/código, foto CATALOG_READY sem texto/marca d'água, sem duplicidade); demais em planilha.
+- (18/10) Migração 0008 aplicada; chave da Áurea na Vercel; 406 peças publicadas no Acervo (site com 477);
+  campo Design limpo onde trazia fornecedor. Ação "Conferir o site no ar" (`check_site.py`) toda verde.
 - (18/10) Notas de pendência só com `NEXT_PUBLIC_SHOW_PENDING=true`; search_path fixo em todas as funções.
 
 ## Pendente
 - Domínio oficial: registrar, ligar na Vercel e definir `NEXT_PUBLIC_SITE_URL`.
-- `ANTHROPIC_API_KEY` na Vercel (Production) para a Áurea IA responder com a Claude API.
 - Conferir variáveis de produção na Vercel (o conector Claude/Vercel ainda não tem acesso ao time
   `vetra-digital-business`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
   `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_SITE_URL`.
-- Rodar `supabase/migrations/0008_aurea_leads.sql` no Supabase (Gabriel) e a ação "Publicar peças no Acervo".
+- 616 peças internas para revisar no painel (planilha da ação "Publicar peças no Acervo"); rodar a ação de novo depois.
 - Planos pagos antes do lançamento: Vercel Pro (uso comercial) e Supabase Pro (não pausar; proteção de senha vazada).
 - Aviso de cookies (LGPD): obrigatório antes de ligar GA4/Meta Pixel/GTM; é mudança visual → precisa de autorização.
 - SEO: as páginas internas usam `#/` e não são indexadas separadamente pelo Google (decisão de arquitetura).
