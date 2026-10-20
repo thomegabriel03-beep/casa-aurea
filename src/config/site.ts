@@ -11,7 +11,7 @@ export const SHOW_PENDING = process.env.NEXT_PUBLIC_SHOW_PENDING === "true";
 
 export const site = {
   name: "Casa Áurea",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.casaaurea.com.br", // PENDENTE: domínio oficial
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.acasaaurea.com.br", // domínio oficial (Hostinger, out/2026)
   locale: "pt_BR",
   description:
     "Mobiliário, decoração e curadoria de interiores em Tijucas, SC. Um showroom para compor ambientes com identidade, com atendimento próximo do início ao fim.",
