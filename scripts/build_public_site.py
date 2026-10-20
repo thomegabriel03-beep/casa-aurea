@@ -199,6 +199,10 @@ CAM_CSS = (
 )
 s = s.replace('</style>', CAM_CSS + '</style>', 1)
 
+# 4d. tema azul-noite sempre (pedido do Gabriel, 20/10/2026): antes o site seguia o tema do computador
+#     do visitante e ficava marfim/branco em quem usa o modo claro. Agora todos veem a versão azul.
+s = replace_once(s, '<html lang="pt-BR">', '<html lang="pt-BR" data-theme="dark" style="color-scheme:dark">', 'tema azul')
+
 # 4b. mapa do rodapé: fica sempre a arte aprovada (com "Abrir no Google Maps" e "Traçar rota");
 #     o iframe do Google não é injetado por cima dela
 s = replace_once(s, "if(!h||/claude|anthropic|localhost|usercontent/.test(h))return;", "return;", 'mapa')
