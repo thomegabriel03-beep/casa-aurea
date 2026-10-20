@@ -1,0 +1,26 @@
+name: Diagnóstico de DNS
+on:
+  workflow_dispatch:
+    inputs:
+      dominio:
+        description: "domínio"
+        required: true
+        default: "acasaaurea.com.br"
+jobs:
+  dns:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Diagnóstico
+        run: |
+          sudo apt-get install -y -qq dnsutils whois >/dev/null 2>&1 || true
+          D="${{ inputs.dominio }}"
+          {
+            echo "== Registro.br (a.dns.br): quem responde pelo domínio"; dig +norec NS "$D" @a.dns.br | grep -E "status|NS|IN" | head -12
+            echo "== whois"; whois "$D" | grep -iE "status|nserver|expires|created|changed|domain" | head -15
+            NS=$(dig +short NS "$D" @a.dns.br | head -1); [ -z "$NS" ] && NS=$(dig +norec "$D" NS @a.dns.br | awk '/IN[[:space:]]+NS/{print $5; exit}')
+            echo "== servidor DNS do domínio: $NS"
+            [ -n "$NS" ] && { echo "-- A @"; dig +short A "$D" @"$NS"; echo "-- www"; dig +short www."$D" @"$NS"; }
+            echo "== Google 8.8.8.8"; dig +short A "$D" @8.8.8.8; dig +short www."$D" @8.8.8.8
+          } > out.txt 2>&1
+          cat out.txt
+          echo "::notice title=DNS::$(sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g' out.txt)"
