@@ -27,4 +27,5 @@ jobs:
           mkdir -p /tmp/t && cp telas/*.png /tmp/t/
           git config user.name "Vetra" && git config user.email "actions@users.noreply.github.com"
           git checkout --orphan telas && git rm -rq --cached . && rm -rf ./* .github .gitignore 2>/dev/null || true
-          cp /tmp/t/*.png . && git add *.png && git commit -qm "telas do site" && git push -f origin telas
+          cp /tmp/t/*.png . && echo '{"git":{"deploymentEnabled":false}}' > vercel.json
+          git add *.png vercel.json && git commit -qm "telas do site" && git push -f origin telas
