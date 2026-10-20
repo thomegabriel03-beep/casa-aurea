@@ -1,0 +1,30 @@
+name: Capturar telas do site
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: "endereço"
+        default: "https://www.acasaurea.com.br"
+permissions:
+  contents: write
+jobs:
+  capturar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install playwright==1.47.0 && python -m playwright install --with-deps chromium
+      - name: Capturar
+        env:
+          SITE: ${{ inputs.site }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python tools/capture_screens.py
+      - name: Guardar na branch telas
+        run: |
+          mkdir -p /tmp/t && cp telas/*.png /tmp/t/
+          git config user.name "Vetra" && git config user.email "actions@users.noreply.github.com"
+          git checkout --orphan telas && git rm -rq --cached . && rm -rf ./* .github .gitignore 2>/dev/null || true
+          cp /tmp/t/*.png . && git add *.png && git commit -qm "telas do site" && git push -f origin telas
