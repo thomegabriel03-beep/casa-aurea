@@ -30,6 +30,8 @@ def http(method: str, path: str, body=None):
             return r.status, r.read().decode("utf-8", "ignore")
     except urllib.error.HTTPError as e:
         return e.code, e.read().decode("utf-8", "ignore")
+    except (urllib.error.URLError, OSError) as e:   # domínio ainda sem DNS/certificado
+        return 0, f"sem resposta: {getattr(e, 'reason', e)}"
 
 
 def main():
@@ -42,7 +44,13 @@ def main():
         out.append(f"- {'✅' if ok else '❌'} {text}")
 
     st, html = http("GET", "/")
-    line(st == 200, f"página inicial abre (HTTP {st})")
+    line(st == 200, f"página inicial abre (HTTP {st})" + ("" if st else f" — {html[:120]}"))
+    if not st:   # domínio ainda não aponta para a Vercel: o resto não tem como conferir
+        text = "\n".join(out)
+        print(text)
+        if os.environ.get("GITHUB_ACTIONS"):
+            print("::notice title=Conferência do site::" + text.replace("\n", "%0A"))
+        return
     m = re.search(r'id="dbFixture">(.*?)</script>', html, re.S)
     items = json.loads(m.group(1)) if m else []
     acv = sum(1 for x in items if x.get("acv"))
