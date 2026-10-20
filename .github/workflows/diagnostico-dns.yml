@@ -5,7 +5,7 @@ on:
       dominio:
         description: "domínio"
         required: true
-        default: "acasaaurea.com.br"
+        default: "acasaurea.com.br"
 jobs:
   dns:
     runs-on: ubuntu-latest

@@ -23,7 +23,7 @@ Next.js 15 (App Router) · TypeScript · Tailwind CSS 4 · Supabase (banco, logi
   · prévia protegida: https://casa-aurea-vetra-digital-business.vercel.app
   · atenção: `casa-aurea.vercel.app` **não** é este projeto (é outro site).
 - Supabase: projeto "CASA ÁUREA", ref `orpdbmqrtokddyeopgzi` (us-east-2) · https://orpdbmqrtokddyeopgzi.supabase.co
-- Domínio oficial: **acasaaurea.com.br** (comprado na Hostinger em out/2026; site em `https://www.acasaaurea.com.br`).
+- Domínio oficial: **acasaurea.com.br** (comprado na Hostinger em out/2026; site em `https://www.acasaurea.com.br`).
 - Instagram: https://www.instagram.com/a.casaaurea · Linktree: https://linktr.ee/casa_aurea
 
 ## Regras que nunca mudam
@@ -61,7 +61,7 @@ Roteiro de infraestrutura: `FECHAMENTO.md`. Pendências de conteúdo do cliente:
 - (18/10) Notas de pendência só com `NEXT_PUBLIC_SHOW_PENDING=true`; search_path fixo em todas as funções.
 
 ## Pendente
-- Domínio: apontar DNS da Hostinger para a Vercel e definir `NEXT_PUBLIC_SITE_URL=https://www.acasaaurea.com.br`.
+- Domínio: apontar DNS da Hostinger para a Vercel e definir `NEXT_PUBLIC_SITE_URL=https://www.acasaurea.com.br`.
 - Conferir variáveis de produção na Vercel (o conector Claude/Vercel ainda não tem acesso ao time
   `vetra-digital-business`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
   `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_SITE_URL`.
