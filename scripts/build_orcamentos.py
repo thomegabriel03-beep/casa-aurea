@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Gera public/admin-orc/orcamentos.js a partir do módulo de orçamentos da prévia aprovada
-(reference/orcamentos/orc.js), trocando o armazenamento local pelo banco (Supabase).
+(reference/orcamentos/orc.js), trocando o armazenamento local pelo banco (Supabase), mais as
+extensões de scripts/orc_ext.js (persianas completas, documento do cliente sem medidas e
+orçamento de móveis por código com custo + margem).
 
-O motor de cálculo e as telas são os mesmos testados na prévia (fórmula da planilha da Camila).
+O motor de cálculo das cortinas é o mesmo testado na prévia (fórmula da planilha da Camila).
 A página /admin/orcamentos carrega os dados do banco, expõe window.__orcStore e roda este script.
+Rodar: python3 scripts/build_orcamentos.py
 """
 import os, re, sys
 
@@ -38,6 +41,14 @@ s = s.replace("admRoot.querySelector('.adm-main')", "admRoot")
 s = re.sub(r"  function orcRerender\(\)\{.*?\n",
            "  function orcRerender(){var y=window.scrollY;renderAdmin(location.hash);window.scrollTo(0,y)}\n", s, count=1)
 
+# 7. extensões (scripts/orc_ext.js): as funções da prévia que mudam ganham o sufixo 0 e são
+#    redefinidas na extensão (que pode chamar a original quando só acrescenta algo)
+for fn in ['orcSeed', 'newItem', 'autoDesc', 'vItem', 'vOrcDoc', 'vOrcPer', 'orcTabs', 'renderOrc', 'waText']:
+    s = rep(s, f"  function {fn}(", f"  function {fn}0(")
+for fn in ['calcPersiana', 'resPersiana']:  # substituídas por inteiro
+    s = rep(s, f"  function {fn}(", f"  function {fn}_previa(")
+ext = open(os.path.join(ROOT, 'scripts', 'orc_ext.js'), encoding='utf-8').read()
+
 head = r'''/* Orçamentos Casa Áurea — gerado por scripts/build_orcamentos.py. Não editar à mão. */
 (function(){
   var STORE=window.__orcStore; var admRoot=document.getElementById('orcRoot');
@@ -56,21 +67,22 @@ head = r'''/* Orçamentos Casa Áurea — gerado por scripts/build_orcamentos.py
   function renderAdmin(h){
     var path=String(h||'').split('?')[0]; if(!/^#\/orcamentos/.test(path)){path='#/orcamentos';h=path}
     admRoot.innerHTML='<p class="orc-status" data-out="status" aria-live="polite"></p>'+(flash?'<div class="adm-alert ok orc-flash" role="status">'+esc(flash)+'</div>':'')+renderOrc(path,h);
-    flash=''; paintStatus();
+    flash=''; paintStatus(); orcAfterRender();
   }
   function go(h,msg){flash=msg||'';if(location.hash===h)renderAdmin(h);else location.hash=h}
 
   /* ---------- banco: um documento por tecido, modelo, orçamento e um de preços ---------- */
   var saved={}, timer=null, saving=false, lastErr='';
   function key(kind,id){return kind+':'+id}
-  function docsOf(o){var d={};d[key('cfg','cfg')]=o.cfg;o.tecidos.forEach(function(t){d[key('tecido',t.id)]=t});o.persianas.forEach(function(p){d[key('persiana',p.id)]=p});o.quotes.forEach(function(q){d[key('orcamento',q.id)]=q});return d}
+  function docsOf(o){var d={};d[key('cfg','cfg')]=o.cfg;o.tecidos.forEach(function(t){d[key('tecido',t.id)]=t});o.persianas.forEach(function(p){d[key('persiana',p.id)]=p});o.quotes.forEach(function(q){d[key('orcamento',q.id)]=q});if(STORE.m9!==false)(o.moveis||[]).forEach(function(q){d[key('moveis',q.id)]=q});return d}
   function storeLoad(){
-    var rows=STORE.rows||[], cfg=null, tec=[], per=[], qs2=[];
-    rows.forEach(function(r){if(r.kind==='cfg')cfg=r.data;else if(r.kind==='tecido')tec.push(r.data);else if(r.kind==='persiana')per.push(r.data);else if(r.kind==='orcamento')qs2.push(r.data)});
+    var rows=STORE.rows||[], cfg=null, tec=[], per=[], qs2=[], mv=[];
+    rows.forEach(function(r){if(r.kind==='cfg')cfg=r.data;else if(r.kind==='tecido')tec.push(r.data);else if(r.kind==='persiana')per.push(r.data);else if(r.kind==='orcamento')qs2.push(r.data);else if(r.kind==='moveis')mv.push(r.data)});
     var o;
     if(!cfg){o=orcSeed();setTimeout(scheduleSave,0)}
     else{var seed=orcSeed();o={v:1,seq:0,cfg:Object.assign({},seed.cfg,cfg),tecidos:tec.sort(function(a,b){return (a.ord||0)-(b.ord||0)||String(a.nome).localeCompare(String(b.nome))}),persianas:per.sort(function(a,b){return String(a.nome).localeCompare(String(b.nome))}),
-      quotes:qs2.sort(function(a,b){return String(b.num).localeCompare(String(a.num))})};
+      quotes:qs2.sort(function(a,b){return String(b.num).localeCompare(String(a.num))}),
+      moveis:mv.sort(function(a,b){return String(b.num).localeCompare(String(a.num))})};
       rows.forEach(function(r){saved[key(r.kind,r.id)]=JSON.stringify(r.data)})}
     return o;
   }
@@ -102,5 +114,6 @@ tail = r'''
 
 out = os.path.join(ROOT, 'public', 'admin-orc')
 os.makedirs(out, exist_ok=True)
-open(os.path.join(out, 'orcamentos.js'), 'w', encoding='utf-8').write(head + s + tail)
-print('ok', len(head + s + tail))
+js = head + s + '\n' + ext + tail
+open(os.path.join(out, 'orcamentos.js'), 'w', encoding='utf-8').write(js)
+print('ok', len(js))

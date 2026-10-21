@@ -70,8 +70,19 @@ export async function saveCommercial(id: string, form: FormData) {
     availability: s(form, "availability"), sku: s(form, "sku"), internal_notes: s(form, "internal_notes"),
     extra_info: s(form, "extra_info"),
   }).eq("id", id);
+  // custo interno (tabela product_costs, migração 0009) — nunca em products, para não vazar em views
+  let costError: string | null = null;
+  if (!error && form.has("cost")) {
+    const cost = n(form, "cost");
+    let fail: { message: string } | null = null;
+    if (cost === null) fail = (await supabase.from("product_costs").delete().eq("product_id", id)).error;
+    else if (cost < 0) fail = { message: "O custo não pode ser negativo." };
+    else fail = (await supabase.from("product_costs").upsert({ product_id: id, cost, source: "painel" }, { onConflict: "product_id" })).error;
+    if (fail) costError = `Dados salvos, mas o custo não: ${fail.message}`;
+  }
   revalidateProduct(id);
-  redirect(`/admin/produtos/${id}?aba=comercial&${error ? `erro=${encodeURIComponent(error.message)}` : "ok=salvo"}`);
+  const msg = error?.message ?? costError;
+  redirect(`/admin/produtos/${id}?aba=comercial&${msg ? `erro=${encodeURIComponent(msg)}` : "ok=salvo"}`);
 }
 
 /** Visibilidade e curadoria. Publicar exige tipo (código Casa Áurea) e foto principal. */
