@@ -250,28 +250,117 @@ a.adm-thumb-link{display:block}
 .orc-addform{align-items:end}
 .adm input.orc-inlabel{border:0;border-bottom:1px dashed var(--a-line);border-radius:0;padding:.1rem 0;font-size:.8125rem;color:var(--a-muted);background:transparent}
 .orc-flash{margin-bottom:1rem}
-/* documento do cliente */
+/* documento do cliente — padrão Casa Áurea (azul-noite, marfim, champanhe; Bodoni + Jost leve) */
 .orc-toolbar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:1.25rem}
-.orc-doc{background:#fff;max-width:52rem;margin:0 auto;padding:3.25rem 3.5rem 2.5rem;border:1px solid var(--a-line);box-shadow:0 10px 30px rgb(15 22 40/.06);color:#1d2136;font-size:.875rem}
-.orc-doc-h{display:flex;justify-content:space-between;align-items:center;flex-direction:row-reverse;margin-bottom:2rem}
-.orc-doc-logo{display:flex;align-items:center;gap:.75rem;font-family:'Cormorant Garamond',serif;letter-spacing:.24em;font-size:1.35rem}
-.orc-doc-logo svg{width:22px;height:29px;color:#1d2136}
-.orc-doc-logo.sm{font-size:.95rem}.orc-doc-logo.sm svg{width:15px;height:20px}
-.orc-doc-cli p{margin:.15rem 0}
-.orc-doc-date{margin-top:1rem!important;font-weight:500}
-.orc-doc h1{font-family:var(--sans);font-size:1rem;letter-spacing:.14em;text-transform:uppercase;text-align:center;margin:2rem 0 1rem;font-weight:600}
-.orc-doc-t{width:100%;border-collapse:collapse}
-.orc-doc-t th{font-size:.75rem;font-weight:600;text-align:center;border:1px solid #cfc7ba;padding:.45rem .5rem;background:#f6f3ee}
-.orc-doc-t td{border:1px solid #cfc7ba;padding:.55rem .6rem;vertical-align:top}
-.orc-doc-t td:nth-child(2){text-align:center}
-.orc-doc-t td:nth-child(3){text-align:center;width:4.5rem}
-.orc-doc-t td:last-child{text-align:right;white-space:nowrap;width:7rem}
-.orc-doc-t tfoot td{font-weight:600;background:#f6f3ee}
-.orc-doc-t tfoot td:first-child{text-align:left}
-.orc-doc-obs{margin-top:1rem;color:#5d554b}
-.orc-doc-p{margin-top:1rem}
-.orc-doc-pay{border:1px solid #cfc7ba;padding:.8rem 1rem;margin-top:1rem;display:grid;gap:.25rem}
-.orc-doc-f{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid #e4ddd2;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.5rem;color:#5d554b;font-size:.75rem}
+.orc-docv{display:inline-flex;border:1px solid var(--a-line);border-radius:4px;overflow:hidden;background:#fff}
+.orc-docv a{padding:.5rem .85rem;font-size:.8125rem;text-decoration:none;color:var(--a-muted);white-space:nowrap}
+.orc-docv a[aria-pressed="true"]{background:var(--a-navy);color:#fff}
+.cad{--c-navy:#0f1628;--c-ivory:#f2ede4;--c-champ:#c9ad7f;--c-champ-ink:#8a7048;--c-line:rgb(15 22 40/.12);--c-mut:#6b6458;
+  position:relative;max-width:52rem;margin:0 auto;padding:4rem 4.25rem 2.75rem;background:#fdfbf8;color:var(--c-navy);
+  border:1px solid #ebe4d8;box-shadow:0 18px 50px rgb(15 22 40/.07);font-family:var(--font-sans);font-weight:300;font-size:.875rem;line-height:1.6}
+.cad::before{content:"";position:absolute;left:4.25rem;right:4.25rem;top:0;height:3px;background:var(--c-navy)}
+.cad p{margin:0}
+.cad-int{position:absolute;top:.9rem;right:4.25rem;font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:#9c3d2e;font-weight:400}
+.cad.is-int::before{background:#9c3d2e}
+.cad-eb{font-size:.625rem;letter-spacing:.24em;text-transform:uppercase;color:var(--c-champ-ink);font-weight:400;margin-bottom:.35rem!important}
+.cad-mut{color:var(--c-mut);font-size:.8125rem}
+.cad-h{display:flex;justify-content:space-between;align-items:flex-end;gap:1.5rem;padding-bottom:1.75rem;border-bottom:1px solid var(--c-champ)}
+.cad-logo{display:inline-flex;align-items:center;gap:.9rem;color:var(--c-navy)}
+.cad-logo .cad-mark{width:24px;height:31px;flex:none;color:var(--c-champ-ink)}
+.cad-logo span{font-family:var(--font-brand);font-weight:500;letter-spacing:.34em;font-size:1.3rem;line-height:1;white-space:nowrap}
+.cad-logo.sm .cad-mark{width:13px;height:17px}.cad-logo.sm span{font-size:.8125rem;letter-spacing:.3em}
+.cad-h-r{text-align:right}
+.cad-num{font-family:var(--font-serif);font-size:1.125rem;letter-spacing:.04em}
+.cad-date{color:var(--c-mut);font-size:.8125rem}
+.cad-intro{display:grid;grid-template-columns:1.4fr 1fr;gap:2rem;padding:2rem 0 .5rem}
+.cad-intro-r{text-align:right}
+.cad-cli{font-family:var(--font-serif);font-size:1.5rem;line-height:1.2;margin-bottom:.25rem!important}
+.cad-title{font-family:var(--font-serif);font-weight:400;font-size:2.125rem;line-height:1.1;letter-spacing:-.005em;margin:2.25rem 0 1.25rem;color:var(--c-navy)}
+.cad-items{list-style:none;margin:0;padding:0;border-top:1px solid var(--c-line)}
+.cad-it{display:grid;grid-template-columns:2.25rem minmax(0,1fr) 3.5rem 8.5rem;gap:1rem;align-items:start;padding:1.1rem 0;border-bottom:1px solid var(--c-line);break-inside:avoid}
+.cad-n{font-family:var(--font-serif);font-size:.9375rem;color:var(--c-champ-ink)}
+.cad-amb{font-size:.6875rem;letter-spacing:.2em;text-transform:uppercase;font-weight:400;margin-bottom:.3rem!important}
+.cad-desc{font-size:.875rem;color:#2a2f42}
+.cad-med{margin-top:.35rem!important;font-size:.75rem;color:#9c3d2e;letter-spacing:.02em}
+.cad-q{text-align:right;color:var(--c-mut);font-size:.8125rem;white-space:nowrap}
+.cad-v{text-align:right;font-family:var(--font-serif);font-size:1.0625rem;white-space:nowrap}
+.cad-ops{display:grid;gap:.75rem;margin-top:.35rem}
+.cad-op{display:grid;grid-template-columns:5.25rem minmax(0,1fr);gap:1rem;align-items:center}
+.cad-op img,.cad-nofoto{width:5.25rem;height:5.25rem;object-fit:contain;background:var(--c-ivory);display:block}
+.cad-op-l{font-size:.625rem;letter-spacing:.2em;text-transform:uppercase;color:var(--c-champ-ink);min-height:.2rem}
+.cad-op-n{font-family:var(--font-serif);font-size:1.0625rem;line-height:1.25}
+.cad-op-v{margin-top:.2rem!important;font-size:.875rem}
+.cad-op-v small{color:var(--c-mut);font-size:.75rem}
+.cad-ou{font-family:var(--font-serif);font-style:italic;color:var(--c-champ-ink);font-size:.9375rem;padding-left:6.25rem;line-height:1}
+.cad-tot{display:flex;justify-content:space-between;align-items:flex-end;gap:2rem;margin-top:1.75rem;padding:1.5rem 0;border-bottom:1px solid var(--c-champ)}
+.cad-tot>div{text-align:right}
+.cad-big{font-family:var(--font-serif);font-size:2.25rem;line-height:1.05}
+.cad-pay{color:var(--c-mut);font-size:.8125rem;margin-top:.35rem!important}
+.cad-cond{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem;padding:1.5rem 0 0}
+.cad-cond p:not(.cad-eb){font-size:.8125rem}
+.cad-obs{margin-top:1.5rem!important;font-size:.8125rem;color:#2a2f42;white-space:pre-line}
+.cad-nota{margin-top:1rem!important;font-size:.75rem;color:var(--c-mut);font-style:italic}
+.cad-f{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.75rem 1.5rem;margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--c-line);font-size:.71875rem;color:var(--c-mut);letter-spacing:.02em}
+.cad-f span{margin:0 .5rem;color:var(--c-champ)}
+/* persianas: opções e avisos */
+.orc-popts{margin-top:.85rem}
+.orc-pchecks .adm-checks{min-height:2.5rem;align-items:center}
+.adm input.orc-zero{border-color:rgb(154 106 23/.55);background:rgb(201 173 127/.08)}
+.orc-zero-note{font-size:.75rem;color:var(--a-warn);margin-top:.5rem}
+.orc-zero-note a{color:inherit}
+/* móveis */
+.mv-ops{display:grid;gap:.6rem;margin-top:.9rem}
+.mv-op{display:grid;grid-template-columns:6.5rem minmax(0,1fr);gap:1rem;border:1px solid var(--a-line);border-radius:6px;padding:.8rem;background:#fff}
+.mv-op.on{border-color:var(--a-navy);box-shadow:inset 0 0 0 1px var(--a-navy)}
+.mv-op img,.mv-nofoto{width:6.5rem;height:6.5rem;object-fit:contain;background:#f6f3ee;border-radius:3px;display:grid;place-items:center;font-size:.6875rem;color:var(--a-muted)}
+.mv-op-h{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .9rem}
+.mv-op-l{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--a-muted)}
+.mv-sel{font-size:.8125rem}
+.mv-op-h .orc-link{margin-left:auto}
+.mv-op-n{font-family:var(--font-serif);font-size:1.15rem;margin:.15rem 0 .6rem}
+.mv-op-n .adm-code{font-size:.75rem;color:var(--a-muted);margin-left:.35rem}
+.mv-op-res{margin-top:.6rem;font-size:.875rem}
+.mv-int{color:var(--a-muted);font-size:.75rem}
+.mv-ou{font-family:var(--font-serif);font-style:italic;color:var(--a-bronze);padding-left:7.5rem;line-height:1}
+.mv-search{position:relative;margin-top:.9rem}
+.mv-sug{position:absolute;z-index:5;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--a-line);border-radius:6px;box-shadow:0 12px 30px rgb(15 22 40/.12);max-height:22rem;overflow:auto}
+.mv-sug:empty{display:none}
+.mv-hit{display:grid;grid-template-columns:2.75rem minmax(0,1fr) auto;gap:.75rem;align-items:center;width:100%;padding:.5rem .75rem;border:0;border-bottom:1px solid var(--a-line);background:none;font:inherit;text-align:left;cursor:pointer;color:var(--a-ink)}
+.mv-hit:hover,.mv-hit:focus-visible{background:#f8f5f0}
+.mv-hit img,.mv-hit .mv-nofoto{width:2.75rem;height:2.75rem;object-fit:contain;background:#f6f3ee;border-radius:3px}
+.mv-hit b{display:block;font-weight:500;font-size:.875rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mv-hit small{display:block;color:var(--a-muted);font-size:.75rem}
+.mv-hit em{font-style:normal;font-size:.75rem;color:var(--a-muted);white-space:nowrap}
+.mv-sug-msg{padding:.75rem;font-size:.8125rem;color:var(--a-muted)}
+.mv-add .mv-search{margin-top:0}
+.orc-row.mv-row3{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr)}
+.cad-n,.cad-v{line-height:1.25}
+.cad-q{padding-top:.1rem}
+.cad-amb{padding-top:.15rem}
+@media(max-width:767px){
+  .cad{padding:2.25rem 1.25rem 1.75rem;font-size:.8125rem}
+  .cad::before{left:1.25rem;right:1.25rem}
+  .cad-int{position:static;margin-bottom:1rem!important}
+  .cad-h{flex-direction:column;align-items:flex-start}
+  .cad-h-r{text-align:left}
+  .cad-intro{grid-template-columns:1fr;gap:1rem}
+  .cad-intro-r{text-align:left}
+  .cad-title{font-size:1.65rem}
+  .cad-it{grid-template-columns:1.75rem minmax(0,1fr) auto;gap:.6rem}
+  .cad-q{grid-column:2;text-align:left;order:3}
+  .cad-v{grid-column:3;grid-row:1}
+  .cad-op{grid-template-columns:4rem minmax(0,1fr)}
+  .cad-op img,.cad-nofoto{width:4rem;height:4rem}
+  .cad-ou{padding-left:5rem}
+  .cad-tot{flex-direction:column;align-items:flex-start;gap:.5rem}
+  .cad-tot>div{text-align:left}
+  .cad-big{font-size:1.85rem}
+  .cad-cond{grid-template-columns:1fr;gap:1rem}
+  .mv-op{grid-template-columns:4.5rem minmax(0,1fr)}
+  .mv-op img,.mv-nofoto{width:4.5rem;height:4.5rem}
+  .mv-ou{padding-left:5.5rem}
+  .orc-pchecks{grid-column:1/-1!important}
+}
 @media(max-width:1100px){.orc-ed{grid-template-columns:1fr}.orc-side{position:static}.orc-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:767px){
   .orc-row.r3,.orc-row.r4{grid-template-columns:1fr 1fr}
@@ -280,9 +369,6 @@ a.adm-thumb-link{display:block}
   .orc-filter{grid-template-columns:1fr auto}.orc-filter input{grid-column:1/-1}
   .orc-it-val{order:-1;width:100%;margin:0 0 .25rem;font-size:1.15rem}
   .orc-tile strong{font-size:1.1rem}
-  .orc-doc{padding:1.5rem 1.1rem;font-size:.8125rem}
-  .orc-doc-h{flex-direction:column-reverse;align-items:flex-start;gap:.75rem}
-  .orc-doc-t td:last-child{width:auto}
   .orc-kpis.adm-grid.c4{grid-template-columns:1fr 1fr}
   .orc-tt td:first-child{min-width:0}
 }
@@ -293,12 +379,26 @@ a.adm-thumb-link{display:block}
 .orc-side{top:1rem}
 @media print{
   @page{size:A4;margin:14mm}
-  .adm-side,.adm-tabbar,.adm-top,.orc-toolbar,.orc-status,.orc-flash{display:none!important}
+  .adm-side,.adm-tabbar,.adm-top,.orc-toolbar,.orc-status,.orc-flash,.adm-tabs{display:none!important}
   .adm-shell{display:block!important;min-height:0!important}
   .adm-main{padding:0!important;max-width:none!important;overflow:visible!important}
   .adm,body{background:#fff!important}
-  .orc-doc{border:0;box-shadow:none;max-width:none;padding:0;font-size:10.5pt}
-  .orc-doc-t tr{break-inside:avoid}
+  .cad{border:0;box-shadow:none;max-width:none;margin:0;padding:6mm 2mm 0;background:#fff!important;font-size:9.5pt;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .cad::before{left:2mm;right:2mm}
+  .cad-int{right:2mm}
+  .cad-it,.cad-op,.cad-tot,.cad-cond,.cad-f{break-inside:avoid}
+  .cad-h{padding-bottom:5mm}
+  .cad-intro{padding:5mm 0 0}
+  .cad-title{font-size:21pt;margin:6mm 0 3mm}
+  .cad-it{padding:3mm 0}
+  .cad-tot{margin-top:4mm;padding:4mm 0}
+  .cad-big{font-size:21pt}
+  .cad-cond{padding-top:4mm}
+  .cad-obs{margin-top:4mm!important}
+  .cad-f{margin-top:7mm;padding-top:3.5mm}
+  .adm{min-height:0!important}
+  .orc-dlg{display:none!important}
 }
 .orc-app,.orc-app *,.orc-app *::before,.orc-app *::after{box-sizing:border-box}
 .orc-app a.adm-btn{color:#fff;text-decoration:none}

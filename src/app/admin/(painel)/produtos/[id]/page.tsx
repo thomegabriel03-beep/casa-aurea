@@ -44,6 +44,11 @@ export default async function ProductEditor({ params, searchParams }: {
     supabase.from("product_possible_duplicates").select("product_id, duplicate_of, reason").or(`product_id.eq.${id},duplicate_of.eq.${id}`),
   ]);
 
+  // custo interno (migração 0009): só nesta aba; se a tabela não existir, o campo avisa em vez de quebrar
+  const costRes = tab === "comercial" ? await supabase.from("product_costs").select("cost").eq("product_id", id).maybeSingle() : null;
+  const costMissing = Boolean(costRes?.error);
+  const costValue = costRes?.data ? str((costRes.data as { cost: number | string | null }).cost) : "";
+
   const flagList = [...(autoFlags.data ?? []), ...(manualFlags.data ?? [])].map((f: { flag: string }) => f.flag);
   const typeById = new Map<string, Row>((types.data ?? []).map((t: Row): [string, Row] => [t.id as string, t]));
   const matSel = new Map<string, boolean>((pMat.data ?? []).map((m: Row): [string, boolean] => [m.material_id as string, Boolean(m.is_primary)]));
@@ -110,6 +115,9 @@ export default async function ProductEditor({ params, searchParams }: {
             <Field label="Preço promocional (R$)"><input type="number" step="0.01" name="sale_price" defaultValue={str(p.sale_price)} /></Field>
             <Field label="Disponibilidade (texto público)" hint="Ex.: Pronta-entrega, Sob encomenda, Locação"><input type="text" name="availability" defaultValue={str(p.availability)} /></Field>
             <Field label="SKU interno"><input type="text" name="sku" defaultValue={str(p.sku)} /></Field>
+            {costMissing
+              ? <Field label="Preço de custo (interno)" hint="Rode a migração 0009_orcamento_moveis.sql no SQL Editor do Supabase para liberar este campo."><input type="text" value="—" readOnly /></Field>
+              : <Field label="Preço de custo (interno)" hint="Só a equipe vê. Base do orçamento de móveis (custo + margem). Vazio = sem custo."><input type="number" step="0.01" min="0" name="cost" defaultValue={costValue} /></Field>}
             <label className="adm-check" style={{ gridColumn: "1/-1" }}><input type="checkbox" name="show_price" defaultChecked={p.show_price} /> Exibir preço no site (padrão: oculto)</label>
             <div style={{ gridColumn: "1/-1" }}><Field label="Observação pública (ex.: taxa de deslocamento)"><input type="text" name="extra_info" defaultValue={str(p.extra_info)} /></Field></div>
             <div style={{ gridColumn: "1/-1" }}><Field label="Notas internas" hint="Nunca aparecem no site."><textarea name="internal_notes" defaultValue={str(p.internal_notes)} /></Field></div>
