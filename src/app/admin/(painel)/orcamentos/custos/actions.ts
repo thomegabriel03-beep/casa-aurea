@@ -4,14 +4,15 @@ import { requireAdmin } from "@/lib/supabase/admin-guard";
 import { baseCodeOf } from "@/lib/catalog/codes";
 import { parseCostCsv } from "@/lib/catalog/costs";
 
-export type CostImportState = {
+export type CostImportResult = {
   ok: boolean;
   message: string;
   updated: number;
   notFound: string[];
   ambiguous: string[];
   errors: string[];
-} | null;
+};
+export type CostImportState = CostImportResult | null;
 
 const CHUNK = 200;
 const MAX_BYTES = 2_000_000;
@@ -28,7 +29,7 @@ function chunks<T>(list: T[], size = CHUNK): T[][] {
 export async function importCosts(_prev: CostImportState, form: FormData): Promise<CostImportState> {
   const { supabase } = await requireAdmin();
   const file = form.get("arquivo");
-  const fail = (message: string): CostImportState => ({ ok: false, message, updated: 0, notFound: [], ambiguous: [], errors: [] });
+  const fail = (message: string): CostImportResult => ({ ok: false, message, updated: 0, notFound: [], ambiguous: [], errors: [] });
   if (!(file instanceof File) || file.size === 0) return fail("Escolha a planilha (CSV) antes de importar.");
   if (file.size > MAX_BYTES) return fail("Arquivo grande demais (máximo 2 MB). Exporte só as colunas código e custo.");
 
