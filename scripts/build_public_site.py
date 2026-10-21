@@ -199,6 +199,270 @@ CAM_CSS = (
 )
 s = s.replace('</style>', CAM_CSS + '</style>', 1)
 
+# 4e. Reunião com Rafa e Camila (21/10/2026) — mudanças visuais autorizadas pelo Gabriel em 21/10/2026.
+#     Mesma linguagem V62 (cores, tipografia, tokens de movimento e componentes existentes); tudo em PT/EN/ES.
+GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJaWVDlm-p2JQR4ca4-4G334k'
+#     (ficha "Casa Áurea" no Google: Av. Valério Gomes, 42 · Centro, Tijucas — SC · +55 48 98457-6227)
+PIXEL = 'data:image/gif;base64,R0lGODlhAQABAAAAACw='
+ARROW = '<svg aria-hidden="true"><use href="#arrow"/></svg>'
+XICON = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">'
+         '<path d="M6 6l12 12M18 6 6 18"/></svg>')
+
+# 4e-1. abertura: o fim do filme alterna com o destaque da Coleção de Natal (crossfade, dois traços,
+#       pausa com o mouse no texto; sem rotação automática com movimento reduzido)
+s = replace_once(s,
+    '              <a href="#showroom" class="tl">Conhecer o showroom<svg aria-hidden="true"><use href="#arrow"/></svg></a>\n'
+    '            </div>\n'
+    '          </div>\n'
+    '        </div>\n',
+    '              <a href="#showroom" class="tl">Conhecer o showroom<svg aria-hidden="true"><use href="#arrow"/></svg></a>\n'
+    '            </div>\n'
+    '          </div>\n'
+    '          <div class="post-alt" id="postAlt" inert>\n'
+    f'            <div class="post-alt-img"><img loading="lazy" class="pa-m" data-img="n_hero" src="{PIXEL}" alt="Árvore de Natal com bolas douradas e prateadas, em ambiente claro com piso de mármore">'
+    f'<img loading="lazy" class="pa-d" data-img="n_hero_sq" src="{PIXEL}" alt="" aria-hidden="true"></div>\n'
+    '            <div class="post-alt-shade" aria-hidden="true"></div>\n'
+    '            <div class="post-copy wrap" id="postNatal">\n'
+    '              <p class="eyebrow">Coleção de Natal 2026</p>\n'
+    '              <h2 class="display"><span class="mask"><span>O Natal,</span></span><span class="mask"><span>em cada <em>detalhe</em>.</span></span></h2>\n'
+    '              <p class="lead">Árvores, guirlandas e arranjos para residências, condomínios e empresas, com montagem da nossa equipe.</p>\n'
+    '              <div class="actions">\n'
+    f'                <a class="btn btn-primary" href="#/colecoes/natal">Conhecer a coleção{ARROW}</a>\n'
+    f'                <button class="tl" data-wa="Olá, Casa Áurea. Gostaria de consultar a disponibilidade da Coleção de Natal 2026.">Consultar disponibilidade{ARROW}</button>\n'
+    '              </div>\n'
+    '            </div>\n'
+    '          </div>\n'
+    '          <div class="post-dots" id="postDots" role="group" aria-label="Destaques da abertura">'
+    '<button type="button" aria-label="Abertura" aria-pressed="true"><i></i></button>'
+    '<button type="button" aria-label="Coleção de Natal" aria-pressed="false"><i></i></button></div>\n'
+    '        </div>\n',
+    'abertura: destaque do Natal')
+HERO_JS = r'''<script>
+/* Abertura: alterna com o destaque da Coleção de Natal (só depois do filme, com a abertura na tela) */
+(function(){
+  var post=document.getElementById('post'),alt=document.getElementById('postAlt'),main=document.getElementById('postCopy'),nat=document.getElementById('postNatal'),dots=document.getElementById('postDots');
+  if(!post||!alt||!main||!nat||!dots)return;
+  var bs=[].slice.call(dots.querySelectorAll('button')),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches,idx=0,seen=true,t=null;
+  function show(i){
+    if(i===idx)return; idx=i; var a=i===1; post.classList.toggle('is-alt',a);
+    bs.forEach(function(b,k){b.setAttribute('aria-pressed',String(k===i))});
+    clearTimeout(t);
+    if(a){alt.removeAttribute('inert');main.setAttribute('inert','');nat.classList.remove('in');void nat.offsetWidth;nat.classList.add('in')}
+    else{main.removeAttribute('inert');alt.setAttribute('inert','');t=setTimeout(function(){if(idx===0)nat.classList.remove('in')},1300)}
+  }
+  function sync(){
+    var on=main.classList.contains('in');
+    dots.classList.toggle('on',on); dots.classList.toggle('run',on&&seen&&!reduced);
+    if(!on&&idx!==0)show(0);
+  }
+  new MutationObserver(sync).observe(main,{attributes:true,attributeFilter:['class']});
+  if('IntersectionObserver' in window)new IntersectionObserver(function(es){seen=es[0].isIntersecting;sync()}).observe(post);
+  dots.addEventListener('animationend',function(){if(dots.classList.contains('run'))show(idx?0:1)});
+  bs.forEach(function(b,k){b.addEventListener('click',function(){show(k)})});
+  /* pausa enquanto o mouse está sobre o texto, os botões ou os traços (a foto ocupa a tela toda) */
+  post.addEventListener('mouseover',function(e){post.classList.toggle('is-paused',!!(e.target.closest&&e.target.closest('.post-copy>*,.post-dots')))});
+  post.addEventListener('mouseleave',function(){post.classList.remove('is-paused')});
+  post.addEventListener('focusin',function(){post.classList.add('is-paused')});
+  post.addEventListener('focusout',function(e){if(!post.contains(e.relatedTarget))post.classList.remove('is-paused')});
+  sync();
+})();
+</script>
+'''
+s = replace_once(s, '<!-- CATEGORIAS: logo depois do filme, sem intervalo -->',
+                 HERO_JS + '<!-- CATEGORIAS: logo depois do filme, sem intervalo -->', 'abertura: script do destaque')
+HERO_CSS = (
+    '.post-alt{position:absolute;inset:0;z-index:1;background:#0f1628;opacity:0;visibility:hidden;transition:opacity 1.2s var(--ease-reveal),visibility 0s linear 1.2s}'
+    '.post.is-alt .post-alt{opacity:1;visibility:visible;transition:opacity 1.2s var(--ease-reveal),visibility 0s}'
+    '.post-alt-img{position:absolute;inset:0}.post-alt-img img{width:100%;height:100%;object-fit:cover;object-position:50% 22%}'
+    '.post-alt-img .pa-d{display:none}'
+    '.post-alt .post-alt-img img{transform:scale(1.04);transition:transform 6s var(--ease-editorial)}.post.is-alt .post-alt-img img{transform:none}'
+    '.post-alt-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgb(15 22 40/.45) 0%,rgb(15 22 40/0) 22%,rgb(15 22 40/.2) 42%,rgb(15 22 40/.9) 74%,#0f1628 100%)}'
+    '.post-dots{position:absolute;z-index:3;left:var(--gutter);bottom:max(1.5rem,env(safe-area-inset-bottom));display:flex;gap:var(--s3);opacity:0;pointer-events:none;transition:opacity .8s var(--ease-nav)}'
+    '.post-dots.on{opacity:1;pointer-events:auto}'
+    '.post-dots button{width:40px;height:28px;display:flex;align-items:center}'
+    '.post-dots i{position:relative;display:block;width:100%;height:1px;background:rgb(244 239 232/.3);overflow:hidden}'
+    '.post-dots i::after{content:"";position:absolute;inset:0;background:var(--bronze-lt);transform:scaleX(0);transform-origin:left}'
+    '.post-dots [aria-pressed="true"] i::after{transform:scaleX(1)}'
+    '.post-dots.run [aria-pressed="true"] i::after{animation:postDot 4.6s linear both}'
+    '.post.is-paused .post-dots i::after{animation-play-state:paused}'
+    '.post-dots button:hover i{background:rgb(244 239 232/.6)}'
+    '@keyframes postDot{from{transform:scaleX(0)}to{transform:scaleX(1)}}'
+    '@media(max-width:767px){.post-dots{bottom:auto;top:calc(env(safe-area-inset-top,0px) + 5.25rem)}}'
+    '@media(min-width:768px) and (max-width:1023px){.post-alt-img img{object-position:62% 28%}.post-alt-shade{background:linear-gradient(90deg,rgb(15 22 40/.94) 0%,rgb(15 22 40/.78) 50%,rgb(15 22 40/.4) 100%)}}'
+    '@media(min-width:1024px){.post-alt-img{left:auto;width:42%}.post-alt-img .pa-m{display:none}.post-alt-img .pa-d{display:block;object-position:50% 50%}'
+    '.post-alt-shade{background:linear-gradient(90deg,#0f1628 0%,#0f1628 58%,rgb(15 22 40/0) 72%)}}'
+    '@media (prefers-reduced-motion:reduce){.post-alt,.post.is-alt .post-alt{transition:none}.post-alt .post-alt-img img{transform:none;transition:none}}'
+)
+
+# 4e-2. Áurea: convite discreto alguns segundos depois da entrada (depois do filme), uma vez por sessão
+s = replace_once(s,
+    '<div class="float" id="float" inert>',
+    '<aside class="aurea-hi" id="aureaHi" aria-label="Convite da Áurea" hidden>'
+    '<button type="button" class="aurea-hi-open" data-conc><span class="conc-av"><svg aria-hidden="true"><use href="#mark"/></svg></span>'
+    '<span class="aurea-hi-t"><b>Olá, sou a Áurea.</b> Posso ajudar a encontrar a peça certa para o seu espaço?</span></button>'
+    f'<button type="button" class="aurea-hi-x" aria-label="Fechar">{XICON}</button></aside>\n'
+    '<div class="float" id="float" inert>',
+    'Áurea: convite')
+HI_JS = r'''<script>
+/* Convite da Áurea: 8 s depois da entrada e só com o botão da Áurea à vista (filme concluído ou pulado).
+   Uma vez por sessão; não aparece se a conversa já foi aberta. */
+(function(){
+  var hi=document.getElementById('aureaHi'); if(!hi)return;
+  var KEY='ca-aurea-hi',t0=Date.now(),done=false,since=0,timer=null,root=document.documentElement;
+  function get(k){try{return sessionStorage.getItem(k)}catch(e){return null}}
+  function mark(){try{sessionStorage.setItem(KEY,'1')}catch(e){}}
+  function used(){if(get(KEY))return true;try{var c=JSON.parse(get('ca-conc')||'[]');if(c&&c.length)return true}catch(e){}return root.classList.contains('conc-on')}
+  if(used())return;
+  var fl=document.getElementById('float'),mb=document.getElementById('mbar');
+  function ready(){var b=matchMedia('(max-width:767px)').matches?mb:fl;
+    return !!b&&b.classList.contains('on')&&!document.querySelector('dialog[open]')&&!document.body.classList.contains('menu-open')&&!root.classList.contains('conc-on')}
+  function hide(){if(hi.hidden)return;hi.classList.remove('on');setTimeout(function(){hi.hidden=true},650)}
+  function show(){done=true;mark();hi.hidden=false;requestAnimationFrame(function(){requestAnimationFrame(function(){hi.classList.add('on')})});
+    var y0=scrollY,mob=matchMedia('(max-width:767px)').matches;setTimeout(hide,mob?11000:16000);
+    /* no celular o convite não fica sobre a leitura: some quando a pessoa continua rolando */
+    addEventListener('scroll',function sc(){if(Math.abs(scrollY-y0)>(mob?140:420)){hide();removeEventListener('scroll',sc)}},{passive:true})}
+  function check(){if(done)return;if(used()){done=true;return}
+    if(Date.now()-t0<8000||!ready()){since=0;return} if(!since)since=Date.now(); if(Date.now()-since>=1200)show()}
+  timer=setInterval(function(){check();if(done)clearInterval(timer)},400);
+  hi.querySelector('.aurea-hi-x').addEventListener('click',function(e){e.stopPropagation();hide()});
+  document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('[data-conc]')){mark();done=true;hide()}});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')hide()});
+})();
+</script>
+'''
+s = replace_once(s, '</body>', HI_JS + '</body>', 'Áurea: script do convite')
+HI_CSS = (
+    '.aurea-hi{position:fixed;z-index:21;right:var(--gutter);bottom:calc(env(safe-area-inset-bottom,0px) + var(--s5) + 3.75rem);width:min(340px,calc(100vw - 2*var(--gutter)));'
+    'display:flex;align-items:flex-start;background:#0f1628;color:#efe8dd;border:1px solid rgb(239 232 221/.14);border-radius:18px 18px 4px 18px;'
+    'box-shadow:0 18px 44px -18px rgb(8 10 20/.75);opacity:0;transform:translateY(10px);transition:opacity .6s var(--ease-nav),transform .6s var(--ease-editorial)}'
+    '.aurea-hi.on{opacity:1;transform:none}.aurea-hi[hidden]{display:none}'
+    '.aurea-hi-open{flex:1;min-width:0;display:flex;align-items:flex-start;gap:var(--s3);text-align:left;padding:var(--s4) 0 var(--s4) var(--s4);font-size:.875rem;line-height:1.5;color:rgb(239 232 221/.82)}'
+    '.aurea-hi-open .conc-av{width:34px;height:34px}.aurea-hi-open .conc-av svg{width:13px;height:17px}'
+    '.aurea-hi-t b{display:block;font-family:var(--serif);font-weight:400;font-size:1.1875rem;line-height:1.2;color:#efe8dd;margin-bottom:3px}'
+    '.aurea-hi-open:hover .aurea-hi-t b{color:#cfae82}'
+    '.aurea-hi-x{flex:none;width:40px;height:40px;margin:4px 4px 0 0;display:grid;place-items:center;border-radius:50%;color:rgb(239 232 221/.6)}'
+    '.aurea-hi-x:hover,.aurea-hi-x:focus-visible{background:rgb(239 232 221/.08);color:#fff}.aurea-hi-x svg{width:16px;height:16px}'
+    'html.conc-on .aurea-hi{display:none}'
+    '@media(max-width:767px){.aurea-hi{right:12px;width:min(300px,calc(100vw - 24px));bottom:calc(env(safe-area-inset-bottom,0px) + 4.75rem)}.aurea-hi-open{font-size:.8125rem}.aurea-hi-t b{font-size:1.0625rem}}'
+    '@media (prefers-reduced-motion:reduce){.aurea-hi{transition:none;transform:none}}'
+)
+
+# 4e-3. cortinas e persianas: ateliê próprio (home, entre "Solução completa" e "Matéria") e na Curadoria
+WA_CORT = 'Olá! Quero um orçamento de cortinas/persianas.'
+s = replace_once(s,
+    '  <!-- 04 MATÉRIA: pedra, madeira, bouclé -->',
+    '  <!-- CORTINAS E PERSIANAS: ateliê próprio (reunião de 21/10/2026) -->\n'
+    '  <section id="cortinas" class="dark sec cort" aria-labelledby="cort-t">\n'
+    '    <div class="wrap g12">\n'
+    f'      <figure class="cort-pic"><div class="ph rv-img"><img loading="lazy" data-img="mt_linho" src="{PIXEL}" alt="Linho em caimento natural, com a trama aparente"></div></figure>\n'
+    '      <div class="cort-txt">\n'
+    '        <p class="eyebrow rv-up">Cortinas e persianas · Ateliê próprio</p>\n'
+    '        <h2 id="cort-t" class="h2 rv-up">A luz da casa, feita sob medida.</h2>\n'
+    '        <p class="lead muted rv-up">Há mais de 20 anos, nosso ateliê desenha e confecciona cortinas e persianas para cada janela: tecidos, forros e blackout, persianas manuais ou motorizadas, com medição e instalação pela nossa equipe.</p>\n'
+    '        <dl class="sol3-stats cort-stats rv-up"><div><dt>20<sup>+</sup></dt><dd>anos no mercado</dd></div><div><dt>Ateliê</dt><dd>próprio</dd></div><div><dt>Sob medida</dt><dd>medição e instalação</dd></div></dl>\n'
+    f'        <p class="cort-cta rv-up"><button class="btn btn-primary" data-wa="{WA_CORT}">Pedir orçamento{ARROW}</button></p>\n'
+    '      </div>\n'
+    '    </div>\n'
+    '  </section>\n\n'
+    '  <!-- 04 MATÉRIA: pedra, madeira, bouclé -->',
+    'cortinas: bloco da home')
+s = replace_once(s,
+    "[['Cortinas','Para desenhar a luz e o silêncio do ambiente.'],",
+    "[['Cortinas e persianas','Ateliê próprio há mais de 20 anos: sob medida, com medição e instalação.'],",
+    'cortinas: Curadoria')
+s = replace_once(s,
+    "'<figure class=\"pg-wide\"><div class=\"ph\"><img loading=\"lazy\" src=\"'+IMG.jardins+'\"",
+    "'<p style=\"margin-top:var(--s6)\"><button class=\"tl\" data-wa=\"" + WA_CORT + "\">Orçamento de cortinas e persianas" + ARROW + "</button></p>'+\n"
+    "      '<figure class=\"pg-wide\"><div class=\"ph\"><img loading=\"lazy\" src=\"'+IMG.jardins+'\"",
+    'cortinas: CTA na Curadoria')
+s = replace_once(s,
+    "      if(/natal|christmas|navidad|arvore|guirland|locacao|aluguel|rental/.test(s))",
+    "      if(/cortina|persiana|curtain|blind|blackout/.test(s))out.push(T3('Sim! A Casa Áurea tem ateliê próprio de cortinas e persianas, há mais de 20 anos no mercado: tudo sob medida, inclusive persianas motorizadas, com medição e instalação pela equipe. Para um orçamento, é só chamar no WhatsApp.',"
+    "'Yes! Casa Áurea has its own curtain and blinds workshop, with over 20 years in the trade: everything made to measure, including motorised blinds, with measuring and installation by our team. For a quote, just message us on WhatsApp.',"
+    "'¡Sí! Casa Áurea tiene taller propio de cortinas y persianas, con más de 20 años en el mercado: todo a medida, incluidas persianas motorizadas, con medición e instalación de nuestro equipo. Para un presupuesto, escríbenos por WhatsApp.')+' [[wa]]');\n"
+    "      if(/natal|christmas|navidad|arvore|guirland|locacao|aluguel|rental/.test(s))",
+    'cortinas: resposta local da Áurea')
+CORT_CSS = (
+    '.cort .cort-pic{grid-column:1/-1}.cort .cort-pic .ph{aspect-ratio:3/2}.cort .cort-pic img{object-position:50% 40%}'
+    '.cort .cort-txt{grid-column:1/-1;margin-top:var(--s7)}'
+    '.cort .h2{margin-top:var(--s5);max-width:11em}.cort .lead{margin-top:var(--s5)}'
+    '.cort-stats{margin-top:var(--s7)}.cort-stats dt{color:var(--on-dark);font-size:clamp(1.375rem,5.6vw,2.25rem)}.cort-stats dd{color:var(--on-dark-muted)}'
+    '.cort-cta{margin-top:var(--s7)}'
+    '@media(min-width:1024px){.cort .cort-pic{grid-column:1/6}.cort .cort-pic .ph{aspect-ratio:4/5}'
+    '.cort .cort-txt{grid-column:7/13;align-self:center;margin-top:0}}'
+)
+
+# 4e-4. "Avalie a Casa Áurea no Google": no cartão do mapa (rodapé) e na seção do showroom
+s = replace_once(s,
+    '>Traçar rota</a></p></div>',
+    f'>Traçar rota</a></p><p class="f2-map-r"><a class="ul" target="_blank" rel="noopener" href="{GOOGLE_REVIEW_URL}">Avalie a Casa Áurea no Google</a></p></div>',
+    'Google: rodapé')
+s = replace_once(s,
+    '<div class="s1-r rv-up"><p><button class="tl" data-wa="Olá, Casa Áurea. Gostaria de agendar uma visita ao showroom.">Agendar uma visita<svg aria-hidden="true"><use href="#arrow"/></svg></button></p></div>',
+    '<div class="s1-r rv-up"><p><button class="tl" data-wa="Olá, Casa Áurea. Gostaria de agendar uma visita ao showroom.">Agendar uma visita<svg aria-hidden="true"><use href="#arrow"/></svg></button></p>'
+    f'<p class="s1-rev"><a class="ul" target="_blank" rel="noopener" href="{GOOGLE_REVIEW_URL}">Avalie a Casa Áurea no Google</a></p></div>',
+    'Google: showroom')
+REV_CSS = (
+    '.f2-map-r{margin-top:var(--s3);font-size:.8125rem;color:rgb(239 232 221/.72)}.f2-map-r a:hover{color:#efe8dd}'
+    '@media(min-width:768px){.f2-map:has(.f2-map-r){height:320px}}'
+    '#showroom .s1-rev{margin-top:var(--s4);font-size:.8125rem;color:rgb(244 239 232/.78)}'
+)
+
+# 4e-5. Meu projeto: uma mensagem com todas as peças, numeradas e com o código público (CA-XXX-0000)
+s = replace_once(s,
+    "    var pecas=state.items.filter(function(i){return i.t==='peca'}).map(function(i){return'— '+P(i.id).name});\n"
+    "    var ambs=state.items.filter(function(i){return i.t==='ambiente'}).map(function(i){return'— '+A(i.id).name});\n",
+    "    var pecas=state.items.filter(function(i){return i.t==='peca'&&P(i.id)}).map(function(i,n){var p=P(i.id);return (n+1)+'. '+p.name+(p.publicCode?' — cód. '+p.publicCode:'')});\n"
+    "    var ambs=state.items.filter(function(i){return i.t==='ambiente'&&A(i.id)}).map(function(i){return'— '+A(i.id).name});\n",
+    'Meu projeto: códigos')
+s = replace_once(s,
+    "    if(pecas.length)t.push('','Peças:',pecas.join('\\n'));\n",
+    "    if(pecas.length)t.push('',pecas.length===1?'Peça (1):':'Peças ('+pecas.length+'):',pecas.join('\\n'));\n",
+    'Meu projeto: total de peças')
+
+# traduções (EN/ES) dos textos novos
+I18N_NEW_D = {
+    'Árvores, guirlandas e arranjos para residências, condomínios e empresas, com montagem da nossa equipe.':
+        ['Trees, wreaths and arrangements for homes, residential buildings and companies, installed by our team.',
+         'Árboles, guirnaldas y arreglos para residencias, condominios y empresas, con montaje de nuestro equipo.'],
+    'Conhecer a coleção': ['Discover the collection', 'Conocer la colección'],
+    'Destaques da abertura': ['Opening highlights', 'Destacados de la portada'],
+    'Abertura': ['Opening', 'Portada'],
+    'Coleção de Natal': ['Christmas Collection', 'Colección de Navidad'],
+    'Convite da Áurea': ['Invitation from Áurea', 'Invitación de Áurea'],
+    'Olá, sou a Áurea.': ["Hello, I'm Áurea.", 'Hola, soy Áurea.'],
+    'Posso ajudar a encontrar a peça certa para o seu espaço?':
+        ['Can I help you find the right piece for your space?', '¿Te ayudo a encontrar la pieza ideal para tu espacio?'],
+    'Cortinas e persianas · Ateliê próprio': ['Curtains and blinds · Our own workshop', 'Cortinas y persianas · Taller propio'],
+    'A luz da casa, feita sob medida.': ["Your home's light, made to measure.", 'La luz de tu casa, hecha a medida.'],
+    'Há mais de 20 anos, nosso ateliê desenha e confecciona cortinas e persianas para cada janela: tecidos, forros e blackout, persianas manuais ou motorizadas, com medição e instalação pela nossa equipe.':
+        ['For over 20 years, our own workshop has designed and made curtains and blinds for every window: fabrics, linings and blackout, manual or motorised blinds, measured and installed by our team.',
+         'Desde hace más de 20 años, nuestro taller diseña y confecciona cortinas y persianas para cada ventana: telas, forros y blackout, persianas manuales o motorizadas, con medición e instalación de nuestro equipo.'],
+    'anos no mercado': ['years in the trade', 'años en el mercado'],
+    'Ateliê': ['Workshop', 'Taller'],
+    'próprio': ['of our own', 'propio'],
+    'Sob medida': ['Made to measure', 'A medida'],
+    'medição e instalação': ['measuring and installation', 'medición e instalación'],
+    'Pedir orçamento': ['Request a quote', 'Pedir presupuesto'],
+    'Cortinas e persianas': ['Curtains and blinds', 'Cortinas y persianas'],
+    'Ateliê próprio há mais de 20 anos: sob medida, com medição e instalação.':
+        ['Our own workshop for over 20 years: made to measure, with measuring and installation.',
+         'Taller propio desde hace más de 20 años: a medida, con medición e instalación.'],
+    'Orçamento de cortinas e persianas': ['Quote for curtains and blinds', 'Presupuesto de cortinas y persianas'],
+    'Avalie a Casa Áurea no Google': ['Review Casa Áurea on Google', 'Califica a Casa Áurea en Google'],
+}
+I18N_NEW_H = {
+    'O Natal,': ['Christmas,', 'La Navidad,'],
+    'em cada detalhe.': ['in every *detail*.', 'en cada *detalle*.'],
+}
+s = replace_once(s,
+    '  function _k(s){return String(s)',
+    '  Object.assign(I18N.D,' + json.dumps(I18N_NEW_D, ensure_ascii=False) + ');\n'
+    '  Object.assign(I18N.H,' + json.dumps(I18N_NEW_H, ensure_ascii=False) + ');\n'
+    '  function _k(s){return String(s)',
+    'traduções da reunião')
+s = s.replace('</style>', HERO_CSS + HI_CSS + CORT_CSS + REV_CSS + '</style>', 1)
+
 # 4d. tema azul-noite sempre (pedido do Gabriel, 20/10/2026): antes o site seguia o tema do computador
 #     do visitante e ficava marfim/branco em quem usa o modo claro. Agora todos veem a versão azul.
 s = replace_once(s, '<html lang="pt-BR">', '<html lang="pt-BR" data-theme="dark" style="color-scheme:dark">', 'tema azul')
