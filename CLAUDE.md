@@ -59,8 +59,14 @@ Roteiro de infraestrutura: `FECHAMENTO.md`. Pendências de conteúdo do cliente:
 - (18/10) Migração 0008 aplicada; chave da Áurea na Vercel; 406 peças publicadas no Acervo (site com 477);
   campo Design limpo onde trazia fornecedor. Ação "Conferir o site no ar" (`check_site.py`) toda verde.
 - (18/10) Notas de pendência só com `NEXT_PUBLIC_SHOW_PENDING=true`; search_path fixo em todas as funções.
+- (21/10) Pedidos da reunião de 20/10: Áurea conhece cortinas/persianas (ateliê), jardim vertical, tapetes, Natal; site com
+  destaque rotativo do Natal na abertura, bolha da Áurea, bloco Cortinas e persianas, "Avalie no Google" (`GOOGLE_REVIEW_URL`)
+  e Meu projeto com códigos; painel com persianas completas, documento do cliente sem medidas (padrão da marca) e
+  orçamento de móveis por código (aba Móveis, custo em `product_costs`, importação CSV em `/admin/orcamentos/custos`).
 
 ## Pendente
+- Rodar `supabase/migrations/0009_orcamento_moveis.sql` no SQL Editor; preencher valores de persiana (cordinha, correntinha,
+  guia, caixa box) e importar a planilha de custos quando o cliente enviar.
 - Domínio: apontar DNS da Hostinger para a Vercel e definir `NEXT_PUBLIC_SITE_URL=https://www.acasaurea.com.br`.
 - Conferir variáveis de produção na Vercel (o conector Claude/Vercel ainda não tem acesso ao time
   `vetra-digital-business`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
