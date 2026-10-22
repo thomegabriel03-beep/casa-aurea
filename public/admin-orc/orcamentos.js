@@ -563,16 +563,17 @@
   function mvOp(op, it, q) {
     var c = orcLoad().cfg, qtd = Math.max(1, num(it.qtd) || 1), custo = num(op.custo), mg = mvMarg(op, q);
     var unit = custo > 0 ? roundUp(custo * (1 + mg / 100) * (1 + num(q.rt) / 100), c.arred) : 0;
-    return { unit: unit, total: unit * qtd, custo: custo * qtd, lucro: (unit - custo) * qtd, mg: mg, ok: custo > 0, qtd: qtd };
+    var rt = 1 + num(q.rt) / 100;
+    return { unit: unit, total: unit * qtd, custo: custo * qtd, lucro: (unit / rt - custo) * qtd, rtv: (unit - unit / rt) * qtd, mg: mg, ok: custo > 0, qtd: qtd };
   }
   function mvSel(it) { return it.ops.length > 1 && it.sel === 1 ? 1 : 0; }
   function mvItem(it, q) { var op = it.ops[mvSel(it)]; if (!op) return { total: 0, custo: 0, lucro: 0, ok: false }; return mvOp(op, it, q); }
   function mvTot(q) {
-    var t = 0, c = 0, ok = q.itens.length > 0;
-    q.itens.forEach(function (it) { var v = mvItem(it, q); t += v.total; c += v.custo; if (!v.ok) ok = false });
+    var t = 0, c = 0, l = 0, r = 0, ok = q.itens.length > 0;
+    q.itens.forEach(function (it) { var v = mvItem(it, q); t += v.total; c += v.custo; l += v.lucro || 0; r += v.rtv || 0; if (!v.ok) ok = false });
     var cfg = orcLoad().cfg, desc = q.desc != null && q.desc !== '' ? num(q.desc) : num(cfg.desc);
     var av = q.avista != null && q.avista !== '' ? num(q.avista) : Math.floor(t * (1 - desc / 100) / 10) * 10;
-    return { total: t, custo: c, lucro: t - c, avista: av, desc: desc, ok: ok };
+    return { total: t, custo: c, lucro: l, rt: r, lucroAv: av - r * (t ? av / t : 0) - c, avista: av, desc: desc, ok: ok };
   }
   function mvNewItem() { return { id: 'm' + Date.now().toString(36) + Math.floor(Math.random() * 99), amb: '', qtd: 1, sel: 0, ops: [] }; }
   function mvNewQuote() {
@@ -632,8 +633,21 @@
     return '<div class="orc-sum-list">' + q.itens.map(function (it, i) { var v = mvItem(it, q), op = it.ops[mvSel(it)]; return '<a href="#it-' + it.id + '" data-mov="jump" data-it="' + it.id + '"><span>' + (i + 1) + '. ' + esc(it.amb || (op ? op.nome : 'Item')) + '</span><b>' + (v.ok ? rs(v.total) : '—') + '</b></a>' }).join('') + '</div>' +
       '<div class="orc-sum-tot"><span>Total</span><strong>' + rs(t.total) + '</strong></div>' +
       '<div class="orc-sum-av"><span>À vista</span><strong>' + rs(t.avista) + '</strong></div>' +
-      '<p class="adm-note orc-int">Interno · custo ' + rs(t.custo) + ' · lucro ' + rs(t.lucro) + (t.total ? ' (' + Math.round(t.lucro / t.total * 100) + '% da venda)' : '') + '</p>' +
+      '<div class="mv-gain"><p class="mv-gain-l">Quanto a loja ganha <span>interno</span></p>' +
+        '<p class="mv-gain-v' + (t.lucro < 0 ? ' neg' : '') + '">' + rs(t.lucro) + '</p>' +
+        '<p class="mv-gain-s">' + (t.total ? Math.round(t.lucro / t.total * 100) + '% do valor de venda · ' : '') + 'margem ' + br(num(q.margem), 0) + '% sobre o custo</p>' +
+        '<dl><div><dt>Custo das peças</dt><dd>' + rs(t.custo) + '</dd></div>' +
+        (t.rt > 0 ? '<div><dt>RT do arquiteto</dt><dd>' + rs(t.rt) + '</dd></div>' : '') +
+        '<div><dt>Ganho se pagar à vista</dt><dd>' + rs(t.lucroAv) + '</dd></div></dl></div>' +
       (num(q.margem) === 0 ? '<p class="orc-zero-note">Margem do orçamento em 0%: o preço está igual ao custo.</p>' : '');
+  }
+  var MG_OPTS = [20, 30, 40, 50, 60, 70, 80, 100];
+  function mvMgChips(q) {
+    var m = num(q.margem), padrao = num(orcLoad().cfg.mMargem);
+    return '<div class="mv-mg"><p class="mv-mg-l">Margem deste orçamento</p><div class="mv-mg-chips" role="group" aria-label="Margem do orçamento">' +
+      MG_OPTS.map(function (v) { return '<button type="button" class="mv-chip' + (m === v ? ' on' : '') + '" data-mov="mg" data-v="' + v + '" aria-pressed="' + (m === v) + '">' + v + '%</button>' }).join('') +
+      '</div><p class="mv-mg-n">Clique para aplicar a todas as peças (quem tiver margem própria no item mantém a dela). Ou digite outro valor abaixo. ' +
+      (m !== padrao ? '<button type="button" class="orc-link" data-mov="mgpad">Usar ' + br(m, 0) + '% como padrão nos próximos orçamentos</button>' : '<span>Padrão dos novos orçamentos: ' + br(padrao, 0) + '%.</span>') + '</p></div>';
   }
   function vMovEdit(id) {
     var q = mvBy(id); if (!q) return head('Orçamento não encontrado', '') + '<a class="adm-btn" href="#/orcamentos/moveis">Voltar</a>';
@@ -644,7 +658,7 @@
       '<div class="orc-ed mov-ed" data-q-id="' + q.id + '"><div class="orc-main">' +
       acard('Cliente', '<div class="orc-row r3">' + field('Nome', '<input type="text" data-mc="nome" value="' + esc(cl.nome) + '" placeholder="Nome do cliente">') + field('Telefone / WhatsApp', '<input type="text" inputmode="tel" data-mc="tel" value="' + esc(cl.tel) + '" placeholder="(48) 9…">') + field('Consultora', '<select data-mq="consultora">' + ['Camila', 'Rafa'].map(function (x) { return opt(x, x, q.consultora) }).join('') + '</select>') + '</div>' +
         '<div class="orc-row r3">' + field('Endereço da obra', '<input type="text" data-mc="end" value="' + esc(cl.end) + '">') + field('Arquiteto(a) / indicação', '<input type="text" data-mc="arq" value="' + esc(cl.arq) + '" placeholder="Opcional">') + field('Status', '<select data-mq="status">' + Object.keys(OST).map(function (k) { return opt(k, OST[k][0], q.status) }).join('') + '</select>') + '</div>') +
-      acard('Preço (interno)', '<div class="orc-row r4">' + field('Margem do orçamento (%)', numIn('data-mq="margem"', q.margem), 'sobre o custo; ajuste por item se quiser') + field('RT do arquiteto (%)', numIn('data-mq="rt"', q.rt)) + field('Desconto à vista (%)', numIn('data-mq="desc"', q.desc == null ? '' : q.desc)) + field('Valor à vista', numIn('data-mq="avista"', q.avista, ' placeholder="automático"'), 'em branco = automático') + '</div>' +
+      acard('Preço (interno)', mvMgChips(q) + '<div class="orc-row r4">' + field('Margem do orçamento (%)', numIn('data-mq="margem"', q.margem), 'sobre o custo; ajuste por item se quiser') + field('RT do arquiteto (%)', numIn('data-mq="rt"', q.rt)) + field('Desconto à vista (%)', numIn('data-mq="desc"', q.desc == null ? '' : q.desc)) + field('Valor à vista', numIn('data-mq="avista"', q.avista, ' placeholder="automático"'), 'em branco = automático') + '</div>' +
         '<div class="orc-row r2">' + field('Data', '<input type="date" data-mq="data" value="' + esc(q.data) + '">') + field('Prazo de entrega', '<input type="text" data-mq="prazo" value="' + esc(q.prazo || '') + '">') + '</div>') +
       '<div class="orc-items">' + q.itens.map(function (it, i) { return mvItemCard(it, q, i) }).join('') + '</div>' +
       (M9 ? '<section class="adm-card mv-add"><h2>Adicionar peça</h2>' + mvSearch('new', 'Código da peça (CA-MES-0167) ou nome') + '<p class="adm-note" style="margin-top:.5rem">Cada peça vira um item. Para dar duas opções ("esta ou esta"), adicione a opção 2 dentro do item.</p></section>' : '') +
@@ -798,6 +812,8 @@
     if (!q) { var mm = location.hash.match(/^#\/orcamentos\/moveis\/([\w-]+)/); q = mm && mvBy(mm[1]); }
     if (!q) return;
     if (a === 'wa') { mvWA(q); return; }
+    if (a === 'mg') { q.margem = num(b.dataset.v); orcSave(); orcRerender(); return; }
+    if (a === 'mgpad') { orcLoad().cfg.mMargem = num(q.margem); orcSave(); orcRerender(); admMsg('Margem padrão salva: ' + br(num(q.margem), 0) + '% para os próximos orçamentos de móveis.'); return; }
     if (a === 'pick') { pickHit(q, b.dataset.key, (hits[b.dataset.key] || [])[Number(b.dataset.i)]); return; }
     if (a === 'jump') { e.preventDefault(); var tg = admRoot.querySelector('#it-' + b.dataset.it); if (tg) tg.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (a === 'dupq') { var c2 = JSON.parse(JSON.stringify(q)), nq = mvNewQuote(); c2.id = nq.id; c2.num = nq.num; c2.status = 'rascunho'; c2.data = today(); o.moveis[0] = c2; orcSave(); location.hash = '#/orcamentos/moveis/' + c2.id; return; }
