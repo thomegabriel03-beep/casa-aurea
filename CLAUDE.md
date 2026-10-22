@@ -63,6 +63,10 @@ Roteiro de infraestrutura: `FECHAMENTO.md`. Pendências de conteúdo do cliente:
   destaque rotativo do Natal na abertura, bolha da Áurea, bloco Cortinas e persianas, "Avalie no Google" (`GOOGLE_REVIEW_URL`)
   e Meu projeto com códigos; painel com persianas completas, documento do cliente sem medidas (padrão da marca) e
   orçamento de móveis por código (aba Móveis, custo em `product_costs`, importação CSV em `/admin/orcamentos/custos`).
+- (21/10) **Orçamento único** em `/admin/orcamentos`: cortina, persiana, móvel do catálogo e "Outro" (item livre por un./m²/m)
+  no mesmo orçamento; margem do orçamento sempre à vista (20–100% + campo livre, por item opcional) valendo para todos os tipos;
+  margem padrão única (`cfg.mPadrao`); "Ver lista de móveis" (catálogo paginado, busca e filtro por tipo); documento do cliente
+  por categoria. Orçamentos antigos abrem com o mesmo preço; os de kind 'moveis' viram 'orcamento' ao abrir.
 
 ## Pendente
 - Rodar `supabase/migrations/0009_orcamento_moveis.sql` no SQL Editor; preencher valores de persiana (cordinha, correntinha,

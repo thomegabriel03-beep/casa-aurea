@@ -448,3 +448,93 @@ a.adm-thumb-link{display:block}
 .lead-m.u{justify-self:end;background:#f6f1e8;border-color:rgb(207 174 130/.45)}
 .lead-m span{display:block;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--a-muted);margin-bottom:.2rem}
 .lead-m p{white-space:pre-wrap;margin:0;font-size:.9rem;line-height:1.5}
+
+/* ===== Orçamento único (cortinas, persianas, móveis e outros no mesmo orçamento) ===== */
+.orc-mgbar{position:sticky;top:0;z-index:6;padding:.9rem 1.1rem;box-shadow:0 6px 18px rgb(15 22 40/.06)}
+.orc-mgbar-r{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:.75rem 1.25rem}
+.orc-mgbar .mv-mg-l{margin-bottom:.4rem}
+.orc-mgbar .mv-mg-chips{align-items:center}
+.orc-mgbar .mv-chip{padding:.4rem .65rem;min-width:3.1rem}
+.orc-mg-free{display:inline-flex;align-items:center;gap:.3rem;font-size:.875rem;color:var(--a-muted);margin-left:.15rem}
+.adm .orc-mg-free input{width:4.25rem;text-align:right;padding:.4rem .5rem}
+.orc-mg-f{display:grid;grid-template-columns:repeat(2,7.25rem);gap:.6rem}
+.orc-mgbar .mv-mg-n{margin-top:.6rem}
+.orc-items:empty{display:none}
+.orc-item[data-tipo]{border-left:3px solid var(--a-line)}
+.orc-item[data-tipo="cortina"]{border-left-color:var(--a-navy)}
+.orc-item[data-tipo="persiana"]{border-left-color:#6b7894}
+.orc-item[data-tipo="movel"]{border-left-color:var(--a-bronze)}
+.orc-item[data-tipo="outro"]{border-left-color:var(--a-ok)}
+.orc-itmg{display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;color:var(--a-muted);margin-left:.25rem}
+.adm .orc-itmg input{width:3.6rem;min-height:0;padding:.3rem .4rem;text-align:right;font-size:.8125rem}
+.adm .orc-itmg.own input{border-color:var(--a-bronze);background:#fbf6ee}
+.orc-addbox{margin-top:1rem}
+.orc-addbox .orc-add{flex-wrap:wrap;margin:0 0 1rem}
+.orc-add-l{margin:0 0 .4rem}
+.orc-add-h{margin-top:.6rem}
+.mv-find{display:flex;gap:.5rem;align-items:flex-start;margin-top:.9rem}
+.mv-find .mv-search{flex:1;margin-top:0}
+.orc-addbox .mv-find{margin-top:0}
+.orc-row.ou-r1{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
+.orc-tag{font-style:normal;font-size:.625rem;letter-spacing:.08em;text-transform:uppercase;color:var(--a-muted);border:1px solid var(--a-line);border-radius:3px;padding:0 .3rem;margin-right:.4rem;vertical-align:1px}
+.orc-sum-cat{display:grid;gap:.2rem;font-size:.8125rem;margin:0;color:var(--a-muted)}
+.orc-sum-cat div{display:flex;justify-content:space-between;gap:1rem}
+.orc-sum-cat dd{margin:0;color:var(--a-ink)}
+.orc-sum>div>.adm-field{margin-top:.25rem}
+.orc-list .orc-mix{font-size:.8125rem;color:var(--a-muted)}
+.cad-sec+.cad-sec{margin-top:1.75rem}
+.cad-sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;padding-bottom:.55rem}
+.cad-sec-h h2{font-size:.6875rem;letter-spacing:.24em;text-transform:uppercase;font-weight:400;color:var(--c-champ-ink);margin:0}
+.cad-sec-h p{font-family:var(--font-serif);font-size:.9375rem;color:var(--c-mut)}
+.cad-it{grid-template-columns:2.25rem minmax(0,1fr) 4.5rem 8.5rem}
+/* lista de móveis (janela) */
+.adm.mvl{min-height:0;background:transparent}
+.mvl{border:0;padding:0;width:min(96vw,980px);max-width:none;max-height:none;margin:auto}
+.mvl::backdrop{background:rgb(15 22 40/.55)}
+.mvl-box{display:flex;flex-direction:column;height:min(88vh,860px);background:#fff;border:1px solid var(--a-line);border-radius:8px;overflow:hidden}
+.mvl-h{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;padding:1.1rem 1.25rem .5rem}
+.mvl-h h2{font-family:var(--font-serif);font-weight:400;font-size:1.5rem;line-height:1.1;margin:0}
+.mvl-h .adm-note{margin:.25rem 0 0}
+.mvl-f{display:grid;grid-template-columns:minmax(0,1fr) 15rem;gap:.6rem;padding:.5rem 1.25rem .9rem;border-bottom:1px solid var(--a-line)}
+.mvl-list{flex:1;overflow:auto;overscroll-behavior:contain}
+.mvl-row{display:grid;grid-template-columns:3.5rem minmax(0,1fr) 11rem 7.5rem 6.5rem;gap:.9rem;align-items:center;padding:.55rem 1.25rem;border-bottom:1px solid var(--a-line)}
+.mvl-row:hover{background:#fcfaf7}
+.mvl-row img,.mvl-row .mv-nofoto{width:3.5rem;height:3.5rem;object-fit:contain;background:#f6f3ee;border-radius:3px;display:block}
+.mvl-n{min-width:0}
+.mvl-n b{display:block;font-weight:500;font-size:.875rem;line-height:1.3}
+.mvl-n small{display:block;color:var(--a-muted);font-size:.75rem;margin-top:.1rem}
+.mvl-med{font-size:.75rem;color:var(--a-muted)}
+.mvl-c{font-size:.8125rem;text-align:right;white-space:nowrap}
+.mvl-c.none{color:var(--a-muted)}
+.mvl-pg{display:flex;justify-content:space-between;align-items:center;gap:.75rem;flex-wrap:wrap;padding:.7rem 1.25rem;border-top:1px solid var(--a-line);font-size:.8125rem;color:var(--a-muted);background:#fbf9f6}
+.mvl-pgb{display:flex;gap:.4rem}
+.mvl .adm-btn[disabled]{cursor:default;opacity:.45}
+.orc-app .mvl a.adm-btn,.mvl .adm-btn.ghost{color:var(--a-ink)}
+.mvl,.mvl *,.mvl *::before,.mvl *::after{box-sizing:border-box}
+@media(max-width:767px){
+  .orc-mgbar{position:static}
+  .orc-mgbar-r{display:grid;gap:.75rem}
+  .orc-mg-f{grid-template-columns:1fr 1fr}
+  .orc-row.ou-r1{grid-template-columns:1fr}
+  .mv-find{flex-direction:column;align-items:stretch}
+  .orc-addbox .orc-add{display:grid;grid-template-columns:1fr 1fr}
+  .orc-addbox .orc-add .adm-btn{white-space:normal;line-height:1.2;padding:.4rem .6rem}
+  .orc-tipo{flex:1 1 calc(100% - 2.5rem);min-width:0;display:flex}
+  .orc-tipo button{flex:1;padding:.5rem .2rem}
+  .cad-q:empty{display:none}
+  .orc-row.mv-row3{grid-template-columns:1fr 1fr}
+  .orc-row.mv-row3>.adm-field:first-child{grid-column:1/-1}
+  .mv-op{grid-template-columns:3.5rem minmax(0,1fr);gap:.75rem;padding:.7rem}
+  .mv-op img,.mv-op .mv-nofoto{width:3.5rem;height:3.5rem}
+  .mv-ou{padding-left:4.25rem}
+  .cad-it{grid-template-columns:1.75rem minmax(0,1fr) auto}
+  .mvl{width:100vw;height:100dvh;max-height:100dvh;margin:0}
+  .mvl-box{height:100dvh;border-radius:0;border:0}
+  .mvl-f{grid-template-columns:1fr}
+  .mvl-row{grid-template-columns:3rem minmax(0,1fr) auto;gap:.15rem .7rem;padding:.6rem 1rem}
+  .mvl-row img,.mvl-row .mv-nofoto{width:3rem;height:3rem;grid-row:1/span 3}
+  .mvl-n,.mvl-med,.mvl-c{grid-column:2}
+  .mvl-c{text-align:left}
+  .mvl-row .adm-btn{grid-column:3;grid-row:1/span 3}
+}
+@media print{.mvl{display:none!important}.cad-sec-h{break-after:avoid}}

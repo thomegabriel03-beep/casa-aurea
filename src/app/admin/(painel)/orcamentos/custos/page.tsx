@@ -16,8 +16,8 @@ export default async function CustosPage() {
 
   return (
     <>
-      <PageHeader title="Custos das peças" description="Preço de custo interno usado no orçamento de móveis (custo + margem). Nunca aparece no site nem no documento do cliente.">
-        <Link className="adm-btn ghost" href="/admin/orcamentos#/orcamentos/moveis">Orçamentos de móveis</Link>
+      <PageHeader title="Custos das peças" description="Preço de custo interno usado nos móveis do orçamento (custo + margem). Nunca aparece no site nem no documento do cliente.">
+        <Link className="adm-btn ghost" href="/admin/orcamentos#/orcamentos">Orçamentos</Link>
       </PageHeader>
       {costs.error ? (
         <div className="adm-alert bad" role="alert">

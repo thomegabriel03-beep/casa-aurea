@@ -1,7 +1,7 @@
 import { requireAdmin } from "@/lib/supabase/admin-guard";
 import { OrcApp } from "@/components/admin/OrcApp";
 
-/* Orçamentos de cortinas, persianas e móveis. O motor e as telas vêm de public/admin-orc/orcamentos.js
+/* Orçamento único: cortinas, persianas, móveis do catálogo e itens livres no mesmo orçamento. O motor e as telas vêm de public/admin-orc/orcamentos.js
    (gerado por scripts/build_orcamentos.py a partir da prévia aprovada + scripts/orc_ext.js); os dados ficam
    no Supabase (tabela quote_docs, só administradores). Custos das peças: product_costs (migração 0009). */
 export const dynamic = "force-dynamic";
@@ -18,8 +18,12 @@ export default async function OrcamentosPage() {
       </div>
     );
   }
-  // migração 0009 (custos + orçamentos de móveis): sem ela, a aba Móveis avisa em vez de quebrar
-  const m9 = await supabase.from("product_costs").select("product_id", { head: true, count: "exact" });
+  // migração 0009 (custos das peças): sem ela, o móvel entra sem custo (digitado à mão)
+  const [m9, typesRes] = await Promise.all([
+    supabase.from("product_costs").select("product_id", { head: true, count: "exact" }),
+    supabase.from("product_types").select("id, name").eq("active", true).order("sort_order"),
+  ]);
+  const types = ((typesRes.data ?? []) as { id: string; name: string }[]).map((t) => ({ id: t.id, name: t.name }));
   const version = (process.env.VERCEL_GIT_COMMIT_SHA || "dev").slice(0, 8);
-  return <OrcApp rows={(data ?? []) as { kind: string; id: string; data: unknown }[]} version={version} m9={!m9.error} />;
+  return <OrcApp rows={(data ?? []) as { kind: string; id: string; data: unknown }[]} version={version} m9={!m9.error} types={types} />;
 }

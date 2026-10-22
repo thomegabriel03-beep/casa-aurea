@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Gera public/admin-orc/orcamentos.js a partir do módulo de orçamentos da prévia aprovada
 (reference/orcamentos/orc.js), trocando o armazenamento local pelo banco (Supabase), mais as
-extensões de scripts/orc_ext.js (persianas completas, documento do cliente sem medidas e
-orçamento de móveis por código com custo + margem).
+extensões de scripts/orc_ext.js: orçamento ÚNICO que mistura cortinas, persianas, móveis do catálogo e
+itens livres, com margem por orçamento (e por item), "quanto a loja ganha", lista de móveis e documento
+do cliente sem medidas.
 
 O motor de cálculo das cortinas é o mesmo testado na prévia (fórmula da planilha da Camila).
 A página /admin/orcamentos carrega os dados do banco, expõe window.__orcStore e roda este script.
@@ -25,7 +26,7 @@ def rep(s, old, new, n=1):
 s = rep(src, "tecidos:tec,persianas:per,quotes:[q]};", "tecidos:tec,persianas:per,quotes:[]};")
 
 # 2. armazenamento: banco (window.__orcStore) em vez do navegador
-s = re.sub(r"  function orcLoad\(\)\{.*?\n", "  function orcLoad(){if(!ORC)ORC=storeLoad();return ORC}\n", s, count=1)
+s = re.sub(r"  function orcLoad\(\)\{.*?\n", "  function orcLoad(){if(!ORC){ORC=storeLoad();orcUpgrade(ORC)}return ORC}\n", s, count=1)
 s = re.sub(r"  function orcSave\(\)\{.*?\n", "  function orcSave(){scheduleSave()}\n", s, count=1)
 
 # 3. sem botão de "restaurar exemplos" (apagaria orçamentos reais)
@@ -43,9 +44,11 @@ s = re.sub(r"  function orcRerender\(\)\{.*?\n",
 
 # 7. extensões (scripts/orc_ext.js): as funções da prévia que mudam ganham o sufixo 0 e são
 #    redefinidas na extensão (que pode chamar a original quando só acrescenta algo)
-for fn in ['orcSeed', 'newItem', 'autoDesc', 'vItem', 'vOrcDoc', 'vOrcPer', 'orcTabs', 'renderOrc', 'waText']:
+for fn in ['orcSeed', 'newItem', 'autoDesc', 'vItem', 'vOrcDoc', 'vOrcPer', 'orcTabs', 'renderOrc', 'waText',
+           'vOrcPrecos', 'resCortina']:
     s = rep(s, f"  function {fn}(", f"  function {fn}0(")
-for fn in ['calcPersiana', 'resPersiana']:  # substituídas por inteiro
+for fn in ['calcPersiana', 'resPersiana', 'calcCortina', 'itemVal', 'qTot', 'newQuote', 'vOrcList',
+           'vOrcEdit', 'vSummary', 'orcPaint']:  # substituídas por inteiro
     s = rep(s, f"  function {fn}(", f"  function {fn}_previa(")
 ext = open(os.path.join(ROOT, 'scripts', 'orc_ext.js'), encoding='utf-8').read()
 
@@ -74,12 +77,12 @@ head = r'''/* Orçamentos Casa Áurea — gerado por scripts/build_orcamentos.py
   /* ---------- banco: um documento por tecido, modelo, orçamento e um de preços ---------- */
   var saved={}, timer=null, saving=false, lastErr='';
   function key(kind,id){return kind+':'+id}
-  function docsOf(o){var d={};d[key('cfg','cfg')]=o.cfg;o.tecidos.forEach(function(t){d[key('tecido',t.id)]=t});o.persianas.forEach(function(p){d[key('persiana',p.id)]=p});o.quotes.forEach(function(q){d[key('orcamento',q.id)]=q});if(STORE.m9!==false)(o.moveis||[]).forEach(function(q){d[key('moveis',q.id)]=q});return d}
+  function docsOf(o){var d={};d[key('cfg','cfg')]=o.cfg;o.tecidos.forEach(function(t){d[key('tecido',t.id)]=t});o.persianas.forEach(function(p){d[key('persiana',p.id)]=p});o.quotes.forEach(function(q){d[key('orcamento',q.id)]=q});return d}
   function storeLoad(){
     var rows=STORE.rows||[], cfg=null, tec=[], per=[], qs2=[], mv=[];
     rows.forEach(function(r){if(r.kind==='cfg')cfg=r.data;else if(r.kind==='tecido')tec.push(r.data);else if(r.kind==='persiana')per.push(r.data);else if(r.kind==='orcamento')qs2.push(r.data);else if(r.kind==='moveis')mv.push(r.data)});
     var o;
-    if(!cfg){o=orcSeed();setTimeout(scheduleSave,0)}
+    if(!cfg){o=orcSeed();o.moveis=mv;setTimeout(scheduleSave,0)}
     else{var seed=orcSeed();o={v:1,seq:0,cfg:Object.assign({},seed.cfg,cfg),tecidos:tec.sort(function(a,b){return (a.ord||0)-(b.ord||0)||String(a.nome).localeCompare(String(b.nome))}),persianas:per.sort(function(a,b){return String(a.nome).localeCompare(String(b.nome))}),
       quotes:qs2.sort(function(a,b){return String(b.num).localeCompare(String(a.num))}),
       moveis:mv.sort(function(a,b){return String(b.num).localeCompare(String(a.num))})};
@@ -91,12 +94,14 @@ head = r'''/* Orçamentos Casa Áurea — gerado por scripts/build_orcamentos.py
     if(!ORC)return; if(saving){scheduleSave();return}
     var cur=docsOf(ORC), up=[], del=[];
     Object.keys(cur).forEach(function(k){var j=JSON.stringify(cur[k]);if(saved[k]!==j)up.push([k,j])});
-    Object.keys(saved).forEach(function(k){if(!(k in cur))del.push(k)});
+    /* orçamento antigo de móveis (kind 'moveis'): só é apagado depois que a versão nova ('orcamento') foi gravada */
+    var later=false;
+    Object.keys(saved).forEach(function(k){if(k in cur)return;if(k.indexOf('moveis:')===0){var nk=key('orcamento',k.slice(7));if(nk in cur&&saved[nk]!==JSON.stringify(cur[nk])){later=true;return}}del.push(k)});
     if(!up.length&&!del.length){paintStatus('ok');return}
     saving=true; paintStatus('saving');
     STORE.sync(up.map(function(x){var i=x[0].indexOf(':');return {kind:x[0].slice(0,i),id:x[0].slice(i+1),data:JSON.parse(x[1])}}),
                del.map(function(k){var i=k.indexOf(':');return {kind:k.slice(0,i),id:k.slice(i+1)}}))
-      .then(function(){up.forEach(function(x){saved[x[0]]=x[1]});del.forEach(function(k){delete saved[k]});lastErr='';saving=false;paintStatus('ok')})
+      .then(function(){up.forEach(function(x){saved[x[0]]=x[1]});del.forEach(function(k){delete saved[k]});lastErr='';saving=false;paintStatus('ok');if(later)scheduleSave()})
       .catch(function(e){lastErr=(e&&e.message)||'erro';saving=false;paintStatus('err');setTimeout(scheduleSave,4000)});
   }
   var stState='ok';

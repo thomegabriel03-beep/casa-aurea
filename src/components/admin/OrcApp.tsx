@@ -7,7 +7,7 @@ type Row = { kind: string; id: string; data: unknown };
 type Up = { kind: string; id: string; data: unknown };
 type Del = { kind: string; id: string };
 
-/** Peça encontrada pelo código ou nome, para o orçamento de móveis (somente no painel). */
+/** Peça encontrada pelo código ou nome, para o orçamento (somente no painel). Sem fornecedor nem código de fornecedor. */
 export type OrcHit = {
   pid: string;
   vid: string | null;
@@ -17,7 +17,12 @@ export type OrcHit = {
   medidas: string;
   custo: number | null;
   preco: number | null;
+  tipo?: string;
 };
+
+export type OrcType = { id: string; name: string };
+export type OrcListQuery = { q?: string; type?: string; page?: number };
+export type OrcListPage = { items: OrcHit[]; total: number; page: number; pageSize: number; types: OrcType[] };
 
 declare global {
   interface Window {
@@ -26,11 +31,14 @@ declare global {
       m9: boolean;
       sync: (up: Up[], del: Del[]) => Promise<void>;
       findProducts: (q: string) => Promise<OrcHit[]>;
+      listProducts: (o: OrcListQuery) => Promise<OrcListPage>;
     };
   }
 }
 
-type SearchRow = { id: string; public_code: string | null; name: string; primary_image: string | null };
+type SearchRow = {
+  id: string; public_code: string | null; name: string; type_name: string | null; primary_image: string | null; total: number | string | null;
+};
 type ProdRow = { id: string; dimensions: string | null; price: number | string | null };
 type VarRow = {
   id: string; product_id: string; variant_code: string | null; name: string | null;
@@ -57,16 +65,43 @@ function variantDims(v: VarRow): string {
   return parts.length ? `${parts.join(" × ")} cm` : "";
 }
 
-/** Busca no catálogo (RLS: só administradores). Nunca devolve fornecedor nem código de fornecedor. */
-async function searchProducts(supabase: ReturnType<typeof createClient>, q: string): Promise<OrcHit[]> {
-  const term = q.trim().replace(/\s+/g, " ");
-  if (term.length < 2) return [];
+type Sb = ReturnType<typeof createClient>;
+
+/** RPC admin_search_products (migrações 0002/0003; só administradores). O supplier_name que ela devolve é ignorado. */
+async function rpcSearch(supabase: Sb, q: string | null, type: string | null, limit: number, offset: number): Promise<SearchRow[]> {
   const { data, error } = await supabase.rpc("admin_search_products", {
-    q: term, f_type: null, f_supplier: null, f_visibility: null, f_curation: null, f_status: null, f_flag: null,
-    p_limit: 8, p_offset: 0,
+    q, f_type: type, f_supplier: null, f_visibility: null, f_curation: null, f_status: null, f_flag: null,
+    p_limit: limit, p_offset: offset,
   });
   if (error) throw new Error(error.message);
-  const rows = (data ?? []) as SearchRow[];
+  return (data ?? []) as SearchRow[];
+}
+
+/** Busca rápida no catálogo (código ou nome). Nunca devolve fornecedor nem código de fornecedor. */
+async function searchProducts(supabase: Sb, q: string): Promise<OrcHit[]> {
+  const term = q.trim().replace(/\s+/g, " ");
+  if (term.length < 2) return [];
+  const rows = await rpcSearch(supabase, term, null, 8, 0);
+  const hits = await enrich(supabase, rows);
+  // código digitado por inteiro (peça ou variante) vem primeiro
+  const upper = term.toUpperCase();
+  hits.sort((a, b) => Number(b.code === upper) - Number(a.code === upper));
+  return hits.slice(0, 12);
+}
+
+const PAGE = 40;
+/** Lista do catálogo inteiro, paginada, com busca por nome/código e filtro por tipo. */
+async function listProducts(supabase: Sb, types: OrcType[], o: OrcListQuery): Promise<OrcListPage> {
+  const term = (o.q ?? "").trim().replace(/\s+/g, " ");
+  const page = Math.max(0, Math.floor(o.page ?? 0));
+  const type = o.type && types.some((t) => t.id === o.type) ? o.type : null;
+  const rows = await rpcSearch(supabase, term || null, type, PAGE, page * PAGE);
+  const items = await enrich(supabase, rows);
+  return { items, total: rows.length ? Number(rows[0].total ?? rows.length) : 0, page, pageSize: PAGE, types };
+}
+
+/** Foto, medidas, variantes e custo interno das peças encontradas. */
+async function enrich(supabase: Sb, rows: SearchRow[]): Promise<OrcHit[]> {
   if (!rows.length) return [];
   const ids = rows.map((r) => r.id);
   const [prods, vars, media, costs] = await Promise.all([
@@ -85,7 +120,6 @@ async function searchProducts(supabase: ReturnType<typeof createClient>, q: stri
   const varsBy = new Map<string, VarRow[]>();
   for (const v of (vars.data ?? []) as VarRow[]) varsBy.set(v.product_id, [...(varsBy.get(v.product_id) ?? []), v]);
 
-  const upper = term.toUpperCase();
   const hits: OrcHit[] = [];
   for (const r of rows) {
     const p = prodBy.get(r.id);
@@ -95,6 +129,7 @@ async function searchProducts(supabase: ReturnType<typeof createClient>, q: stri
       medidas: p?.dimensions ?? "",
       custo: costBy.get(r.id) ?? null,
       preco: toNum(p?.price ?? null),
+      tipo: r.type_name ?? "",
     };
     const vs = varsBy.get(r.id) ?? [];
     if (!base.medidas && vs.length === 1) base.medidas = variantDims(vs[0]);
@@ -110,13 +145,11 @@ async function searchProducts(supabase: ReturnType<typeof createClient>, q: stri
       });
     }
   }
-  // código digitado por inteiro (peça ou variante) vem primeiro
-  hits.sort((a, b) => Number(b.code === upper) - Number(a.code === upper));
-  return hits.slice(0, 12);
+  return hits;
 }
 
 /* Monta o módulo de orçamentos e liga o salvamento ao banco (quote_docs). */
-export function OrcApp({ rows, version, m9 }: { rows: Row[]; version: string; m9: boolean }) {
+export function OrcApp({ rows, version, m9, types }: { rows: Row[]; version: string; m9: boolean; types: OrcType[] }) {
   const started = useRef(false);
 
   useEffect(() => {
@@ -137,12 +170,13 @@ export function OrcApp({ rows, version, m9 }: { rows: Row[]; version: string; m9
         }
       },
       findProducts: (q) => searchProducts(supabase, q),
+      listProducts: (o) => listProducts(supabase, types, o),
     };
     const s = document.createElement("script");
     s.src = `/admin-orc/orcamentos.js?v=${version}`;
     s.async = true;
     document.body.appendChild(s);
-  }, [rows, version, m9]);
+  }, [rows, version, m9, types]);
 
   return <div id="orcRoot" className="orc-app"><p className="adm-note">Carregando orçamentos…</p></div>;
 }
