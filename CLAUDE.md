@@ -67,10 +67,14 @@ Roteiro de infraestrutura: `FECHAMENTO.md`. Pendências de conteúdo do cliente:
   no mesmo orçamento; margem do orçamento sempre à vista (20–100% + campo livre, por item opcional) valendo para todos os tipos;
   margem padrão única (`cfg.mPadrao`); "Ver lista de móveis" (catálogo paginado, busca e filtro por tipo); documento do cliente
   por categoria. Orçamentos antigos abrem com o mesmo preço; os de kind 'moveis' viram 'orcamento' ao abrir.
+- (26/10) Migrações 0009 e 0010 aplicadas. Áurea: convite central de boas-vindas com 4 caminhos; captação de contato
+  (3 perguntas livres, cartão na 4ª e antes da foto, token HMAC no servidor, teto de 60 mensagens; `/api/aurea/contato`,
+  função `aurea_contact`); leads com cidade, perfil, consentimento e origem; travas de assunto (`src/lib/aurea/escopo.ts`:
+  filtro antes da IA, marca [[fora]], 3 recusas/h bloqueiam a IA). Conferência do site cobre tudo isso.
 
 ## Pendente
-- Rodar `supabase/migrations/0009_orcamento_moveis.sql` no SQL Editor; preencher valores de persiana (cordinha, correntinha,
-  guia, caixa box) e importar a planilha de custos quando o cliente enviar.
+- Preencher valores de persiana (cordinha, correntinha, guia, caixa box) e importar a planilha de custos quando o cliente enviar.
+- Opcional: `AUREA_LEAD_SECRET` na Vercel (hoje o token do lead usa a service role como segredo).
 - Domínio: apontar DNS da Hostinger para a Vercel e definir `NEXT_PUBLIC_SITE_URL=https://www.acasaurea.com.br`.
 - Conferir variáveis de produção na Vercel (o conector Claude/Vercel ainda não tem acesso ao time
   `vetra-digital-business`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
