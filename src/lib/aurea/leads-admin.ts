@@ -12,11 +12,52 @@ export const statusLabel = (s: string) => LEAD_STATUS[s]?.[0] ?? s;
 
 export const LANG_LABEL: Record<string, string> = { pt: "Português", en: "Inglês", es: "Espanhol" };
 
+export type LeadSource = {
+  utm_source?: string; utm_medium?: string; utm_campaign?: string;
+  referrer?: string; landing?: string; device?: string; first_at?: string;
+};
+
 export type LeadRow = {
   id: string; created_at: string; updated_at: string; lang: string; turn_count: number;
   first_message: string | null; name: string | null; phone: string | null; email: string | null;
   pieces: string[]; wa_clicked: boolean; is_lead: boolean; status: string; notes: string | null;
+  city: string | null; profile: string | null; consent_at: string | null; contact_at: string | null;
+  source: LeadSource | null; user_count: number;
 };
+
+/** colunas lidas pela lista e pela planilha (migrações 0008 + 0010) */
+export const LEAD_COLUMNS =
+  "id, created_at, updated_at, lang, turn_count, user_count, first_message, name, phone, email, city, profile, consent_at, contact_at, source, pieces, wa_clicked, is_lead, status, notes";
+
+export const PROFILE_LABEL: Record<string, string> = {
+  cliente: "Cliente final",
+  arquiteto: "Arquiteto(a) ou designer",
+  empresa: "Empresa ou construtora",
+};
+export const PROFILE_KEYS = Object.keys(PROFILE_LABEL);
+export const profileLabel = (p: string | null) => (p ? PROFILE_LABEL[p] ?? p : "");
+
+const hostOf = (u?: string) => {
+  if (!u) return "";
+  try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u.slice(0, 60); }
+};
+const KNOWN: [RegExp, string][] = [
+  [/(^|\.)google\./, "Google"], [/instagram\.com$/, "Instagram"], [/(facebook|fb)\.com$|^l\.facebook/, "Facebook"],
+  [/linktr\.ee$/, "Linktree"], [/bing\.com$/, "Bing"], [/whatsapp|wa\.me$/, "WhatsApp"], [/pinterest\./, "Pinterest"],
+];
+
+/** origem em poucas palavras: "instagram · cpc · natal2026", "Google (busca)" ou "Direto" */
+export function sourceLabel(s: LeadSource | null | undefined): string {
+  if (!s) return "—";
+  if (s.utm_source) return [s.utm_source, s.utm_medium, s.utm_campaign].filter(Boolean).join(" · ");
+  const h = hostOf(s.referrer);
+  if (!h) return "Direto";
+  const k = KNOWN.find(([re]) => re.test(h));
+  return k ? `${k[1]} (link)` : h;
+}
+
+export const deviceLabel = (s: LeadSource | null | undefined) =>
+  s?.device === "mobile" ? "Celular" : s?.device === "desktop" ? "Computador" : "";
 
 /** link do WhatsApp para o número que a pessoa deixou (Brasil: acrescenta 55) */
 export function waLink(phone: string | null, text?: string): string | null {

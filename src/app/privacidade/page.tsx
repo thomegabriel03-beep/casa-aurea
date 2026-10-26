@@ -18,7 +18,11 @@ export default function PrivacyPage() {
       <p>
         <strong>Áurea, a concierge do site.</strong> As conversas com a Áurea são registradas para que a
         equipe da Casa Áurea possa dar continuidade ao seu atendimento: o texto da conversa, o idioma, as
-        peças indicadas e, se você escrever na conversa, seu nome, WhatsApp ou e-mail. Esses dados são usados
+        peças indicadas, o que você informar no cartão de contato da Áurea (nome, WhatsApp e, se quiser, e-mail,
+        cidade e se você é cliente, profissional ou empresa, com a data do seu aceite) ou escrever na conversa,
+        e a origem da visita (campanha ou site de onde você veio, página de entrada e se acessou pelo celular ou
+        computador). Neste aparelho, o site guarda apenas o seu primeiro nome e um código de acesso, para que
+        a Áurea não peça o contato de novo. Esses dados são usados
         apenas pela equipe da Casa Áurea para responder ao seu interesse, não são vendidos nem compartilhados
         para publicidade, e ficam guardados em servidor com acesso restrito. As respostas da Áurea são geradas
         por inteligência artificial (Claude, da Anthropic), que recebe o texto da conversa apenas para responder.

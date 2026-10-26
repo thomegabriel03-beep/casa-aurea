@@ -538,3 +538,7 @@ a.adm-thumb-link{display:block}
   .mvl-row .adm-btn{grid-column:3;grid-row:1/span 3}
 }
 @media print{.mvl{display:none!important}.cad-sec-h{break-after:avoid}}
+/* Leads da Áurea: 5 indicadores e destaque para arquitetos */
+@media(min-width:1024px){.adm-grid.c4.lead-stats{grid-template-columns:repeat(5,1fr)}}
+.adm-table tr.lead-arq td{background:rgb(168 128 79/.07)}
+.adm-table tr.lead-arq td:first-child{box-shadow:inset 3px 0 0 #a8804f}

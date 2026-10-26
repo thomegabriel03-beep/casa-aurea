@@ -199,6 +199,198 @@ CAM_CSS = (
 )
 s = s.replace('</style>', CAM_CSS + '</style>', 1)
 
+# 4f. Áurea: captação de contato (aprovada pelo Gabriel em 26/10/2026).
+#     3 perguntas livres; antes da 4ª mensagem (ou de qualquer foto), a Áurea pede nome e WhatsApp num cartão
+#     dentro da conversa. O servidor (/api/aurea) aplica a mesma regra e só libera com o token emitido por
+#     /api/aurea/contato. O aparelho guarda só o primeiro nome, o perfil e o token (localStorage).
+#     Origem da visita (UTM, referência, página de entrada, dispositivo) capturada no primeiro acesso (sessionStorage).
+#     Textos em PT/EN/ES no dicionário da própria conversa (o painel da Áurea é data-noi18n).
+s = replace_once(s,
+    '<button type="button" class="conc-stop" hidden>Parar</button></form>',
+    '<button type="button" class="conc-stop" hidden>Parar</button></form><div class="conc-lock" hidden></div>',
+    'Áurea: espaço do campo bloqueado')
+LEAD_JS = r"""    /* ---- captação de contato: 3 perguntas livres; depois (ou para foto) a Áurea pede nome e WhatsApp ---- */
+    var LEADT={pt:{h:'Para continuar, como posso te chamar?',hf:'Para analisar a sua foto, me deixa seu nome e WhatsApp?',p:'Assim a nossa equipe pode te enviar as opções e valores pelo WhatsApp.',pf:'Assim eu olho o seu ambiente com calma e a nossa equipe pode te enviar as opções e valores pelo WhatsApp.',eb:'Concierge Casa Áurea',name:'Nome',wa:'WhatsApp',email:'E-mail',city:'Cidade',opt:'opcional',who:'Você é:',pr:['Cliente final','Arquiteto(a) ou designer','Empresa ou construtora'],go:'Continuar a conversa',goF:'Continuar',no:'Agora não',lgpd:'Seus dados ficam só com a Casa Áurea e são usados para o seu atendimento.',priv:'Privacidade',eName:'Me conta como posso te chamar.',eWa:'Confere o WhatsApp? Ex.: (48) 99999-9999 ou, de fora do Brasil, +351 912 345 678.',eEmail:'Esse e-mail parece incompleto.',eSave:'Não consegui salvar agora. Tente de novo em instantes ou fale com a equipe no WhatsApp.',sending:'Enviando…',thanks:'Obrigada, {n}! Vamos continuar.',thanksF:'Obrigada, {n}! Agora é só enviar a foto do seu espaço.',declined:'Tudo bem! Quando quiser, a nossa equipe continua com você pelo WhatsApp, já com o resumo da nossa conversa. [[wa]]',declinedF:'Tudo bem! Pode seguir perguntando por aqui, e a foto você também pode mandar direto para a nossa equipe no WhatsApp. [[wa]]',lock:'Para seguir conversando, deixe seu contato ou fale com a nossa equipe no WhatsApp.',reopen:'Deixar meu contato',teto:'A nossa conversa já está bem completa! Para seguir com todo o cuidado, a equipe continua com você pelo WhatsApp. [[wa]]',hi:'Olá, {n}!'},
+      en:{h:'To carry on, what should I call you?',hf:'To look at your photo, may I have your name and WhatsApp?',p:'That way our team can send you options and prices on WhatsApp.',pf:'That way I can look at your space properly and our team can send you options and prices on WhatsApp.',eb:'Casa Áurea Concierge',name:'Name',wa:'WhatsApp',email:'Email',city:'City',opt:'optional',who:'You are:',pr:['Homeowner','Architect or designer','Company or developer'],go:'Continue the conversation',goF:'Continue',no:'Not now',lgpd:'Your details stay with Casa Áurea only and are used to assist you.',priv:'Privacy',eName:'Please tell me what to call you.',eWa:'Could you check the WhatsApp number? Include the country code, e.g. +44 7700 900123.',eEmail:'That email looks incomplete.',eSave:'I could not save it right now. Please try again in a moment or talk to the team on WhatsApp.',sending:'Sending…',thanks:'Thank you, {n}! Let’s carry on.',thanksF:'Thank you, {n}! Now just send the photo of your space.',declined:'No problem! Whenever you like, our team can carry on with you on WhatsApp, with a summary of our conversation. [[wa]]',declinedF:'No problem! You can keep asking here, and you can also send the photo straight to our team on WhatsApp. [[wa]]',lock:'To keep chatting, leave your contact or talk to our team on WhatsApp.',reopen:'Leave my contact',teto:'Our conversation is already quite complete! To carry on with proper care, the team will continue with you on WhatsApp. [[wa]]',hi:'Hello, {n}!'},
+      es:{h:'Para continuar, ¿cómo te llamo?',hf:'Para analizar tu foto, ¿me dejas tu nombre y WhatsApp?',p:'Así nuestro equipo puede enviarte las opciones y los precios por WhatsApp.',pf:'Así miro tu ambiente con calma y nuestro equipo puede enviarte las opciones y los precios por WhatsApp.',eb:'Concierge Casa Áurea',name:'Nombre',wa:'WhatsApp',email:'E-mail',city:'Ciudad',opt:'opcional',who:'Eres:',pr:['Cliente final','Arquitecto/a o diseñador/a','Empresa o constructora'],go:'Continuar la conversación',goF:'Continuar',no:'Ahora no',lgpd:'Tus datos quedan solo con Casa Áurea y se usan para atenderte.',priv:'Privacidad',eName:'Cuéntame cómo te llamo.',eWa:'¿Revisas el WhatsApp? Incluye el código de país, p. ej. +54 9 11 2345 6789.',eEmail:'Ese e-mail parece incompleto.',eSave:'No pude guardarlo ahora. Inténtalo de nuevo en un momento o habla con el equipo por WhatsApp.',sending:'Enviando…',thanks:'¡Gracias, {n}! Sigamos.',thanksF:'¡Gracias, {n}! Ahora solo envía la foto de tu espacio.',declined:'¡Está bien! Cuando quieras, nuestro equipo sigue contigo por WhatsApp, con el resumen de nuestra conversación. [[wa]]',declinedF:'¡Está bien! Puedes seguir preguntando aquí, y la foto también puedes enviarla directo a nuestro equipo por WhatsApp. [[wa]]',lock:'Para seguir conversando, deja tu contacto o habla con nuestro equipo por WhatsApp.',reopen:'Dejar mi contacto',teto:'¡Nuestra conversación ya está muy completa! Para seguir con todo cuidado, el equipo continúa contigo por WhatsApp. [[wa]]',hi:'¡Hola, {n}!'}};
+    var PFS=['cliente','arquiteto','empresa'];
+    function LT(k){var o=LEADT[lg()]||LEADT.pt;return o[k]}
+    function sget(st,k){try{return window[st].getItem(k)}catch(e){return null}}
+    function sset(st,k,v){try{if(v==null)window[st].removeItem(k);else window[st].setItem(k,v)}catch(e){}}
+    var LEAD=null;try{LEAD=JSON.parse(sget('localStorage','ca-lead')||'null');if(!LEAD||!LEAD.t||!LEAD.lid||!LEAD.n)LEAD=null}catch(e){LEAD=null}
+    var QN=+(sget('sessionStorage','ca-lead-q')||0)||0,LSTATE=sget('sessionStorage','ca-lead-no')?'no':null,LVAR='msg',PEND=null,LV={name:'',phone:'',email:'',city:'',pf:''};
+    /* origem da visita: guardada no primeiro acesso da sessão */
+    var SRC=null;try{SRC=JSON.parse(sget('sessionStorage','ca-src')||'null')}catch(e){}
+    if(!SRC){SRC={};try{var up=new URLSearchParams(location.search);['utm_source','utm_medium','utm_campaign'].forEach(function(k){var v=up.get(k);if(v)SRC[k]=v.slice(0,120)})}catch(e){}
+      try{var rf=document.referrer;if(rf&&new URL(rf).host!==location.host)SRC.referrer=rf.slice(0,300)}catch(e){}
+      SRC.landing=(location.pathname+location.search+location.hash).slice(0,300);
+      SRC.device=(matchMedia('(max-width:767px)').matches||(matchMedia('(pointer:coarse)').matches&&Math.min(screen.width,screen.height)<768))?'mobile':'desktop';
+      SRC.first_at=new Date().toISOString();sset('sessionStorage','ca-src',JSON.stringify(SRC))}
+    function needLead(photo){return !LEAD&&(photo||QN>=3)}
+    function convN(){return turns.filter(function(t){return t.role==='user'}).length}
+    function apiBody(msgs){var b={messages:msgs,lang:lg(),n:LEAD?convN():Math.max(QN,convN())};if(LEAD){b.lead={id:LEAD.lid,t:LEAD.t};b.who={name:LEAD.n,profile:LEAD.p||''}}return b}
+    function hiText(){var h=X().hi;return LEAD?h.replace(/^(Olá|Hello|¡Hola)!/,LT('hi').replace('{n}',LEAD.n)):h}
+    var lockEl=root.querySelector('.conc-lock');
+    function maskPhone(v,del){v=String(v||'');if(del)return v;
+      if(/^\s*\+/.test(v))return '+'+v.replace(/[^\d ]/g,'').replace(/\s+/g,' ').replace(/^ /,'').slice(0,20);
+      var d=v.replace(/\D/g,'').slice(0,11);if(!d)return '';if(d.length<3)return '('+d;
+      var a='('+d.slice(0,2)+') ',r=d.slice(2);return d.length<=10?a+(r.length>4?r.slice(0,4)+'-'+r.slice(4):r):a+r.slice(0,5)+'-'+r.slice(5)}
+    function phoneOk(v){var d=String(v||'').replace(/\D/g,'');if(/^\s*\+/.test(v)){if(d.indexOf('55')===0)d=d.slice(2);else return d.length>=8&&d.length<=15}
+      return (d.length===10||(d.length===11&&d.charAt(2)==='9'))&&/^[1-9][0-9]/.test(d)}
+    function cardHTML(){var f=LVAR==='foto',o=LEADT[lg()]||LEADT.pt,A='<svg aria-hidden="true"><use href="#arrow"/></svg>';
+      return '<p class="conc-lead-eb">'+esc(o.eb)+'</p><h3 class="conc-lead-h" id="concLeadT">'+esc(f?o.hf:o.h)+'</h3><p class="conc-lead-p">'+esc(f?o.pf:o.p)+'</p>'+
+      '<form class="conc-lead-f" novalidate>'+
+      '<label class="cl-f"><span>'+esc(o.name)+' <i aria-hidden="true">*</i></span><input name="name" autocomplete="name" maxlength="80" required value="'+esc(LV.name)+'"></label>'+
+      '<label class="cl-f"><span>'+esc(o.wa)+' <i aria-hidden="true">*</i></span><input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" required placeholder="'+(lg()==='pt'?'(48) 99999-9999':'+55 48 99999-9999')+'" value="'+esc(LV.phone)+'"></label>'+
+      '<div class="cl-row"><label class="cl-f"><span>'+esc(o.email)+' <em>'+esc(o.opt)+'</em></span><input name="email" type="email" inputmode="email" autocomplete="email" maxlength="120" value="'+esc(LV.email)+'"></label>'+
+      '<label class="cl-f"><span>'+esc(o.city)+' <em>'+esc(o.opt)+'</em></span><input name="city" autocomplete="address-level2" maxlength="80" value="'+esc(LV.city)+'"></label></div>'+
+      '<fieldset class="cl-who"><legend>'+esc(o.who)+' <em>'+esc(o.opt)+'</em></legend><div class="cl-chips">'+PFS.map(function(k,i){return '<button type="button" data-pf="'+k+'" aria-pressed="'+(LV.pf===k)+'">'+esc(o.pr[i])+'</button>'}).join('')+'</div></fieldset>'+
+      '<p class="cl-err" role="alert"></p>'+
+      '<div class="cl-acts"><button type="submit" class="cl-go">'+esc(f?o.goF:o.go)+A+'</button><button type="button" class="cl-no">'+esc(o.no)+'</button></div>'+
+      '<p class="cl-lgpd">'+esc(o.lgpd)+' <a href="/privacidade" target="_blank" rel="noopener">'+esc(o.priv)+'</a></p></form>'}
+    function showForm(on){form.hidden=!on;if(!on){sugg.hidden=true}}
+    function mountCard(focus){var old=log.querySelector('.conc-lead');if(old)old.remove();
+      var c=document.createElement('div');c.className='conc-lead';c.setAttribute('role','group');c.setAttribute('aria-labelledby','concLeadT');c.innerHTML=cardHTML();log.appendChild(c);
+      showForm(false);lockEl.hidden=true;
+      requestAnimationFrame(function(){log.scrollTop=Math.max(0,c.offsetTop-log.offsetTop-12)});
+      if(focus&&!matchMedia('(pointer:coarse)').matches)setTimeout(function(){var i=c.querySelector(LV.name?'[name=phone]':'[name=name]');if(i)try{i.focus({preventScroll:true})}catch(e){}},280);
+      return c}
+    function showLead(v){LVAR=v||'msg';LSTATE='card';sset('sessionStorage','ca-lead-no',null);mountCard(true);if(!root.classList.contains('is-open'))open()}
+    function showLock(){lockEl.innerHTML='<p>'+esc(LT('lock'))+'</p><p class="conc-lock-a"><button type="button" class="conc-lock-re">'+esc(LT('reopen'))+'</button></p>';lockEl.hidden=false;showForm(false)}
+    function leadUI(){
+      if(LEAD){LSTATE=null;lockEl.hidden=true;showForm(true);return}
+      if(LSTATE==='card'){mountCard(false);return}
+      if(LSTATE==='no'&&needLead(false)){bubble('bot',botHTML(LT('declined')));showLock();return}
+      lockEl.hidden=true;showForm(true)}
+    function decline(){var c=log.querySelector('.conc-lead');if(c)c.remove();var p=PEND;PEND=null;
+      if(needLead(false)){LSTATE='no';sset('sessionStorage','ca-lead-no','1');bubble('bot',botHTML(LT('declined')));showLock()}
+      else{LSTATE=null;bubble('bot',botHTML(LT('declinedF')));lockEl.hidden=true;showForm(true);if(p&&p.q){box.value=p.q}}
+      log.scrollTop=log.scrollHeight}
+    function fieldErr(c,name,msg){var e=c.querySelector('.cl-err');[].forEach.call(c.querySelectorAll('input'),function(i){i.removeAttribute('aria-invalid')});
+      if(name){var i=c.querySelector('[name='+name+']');if(i){i.setAttribute('aria-invalid','true');try{i.focus({preventScroll:false})}catch(x){}}}e.textContent=msg||''}
+    function submitLead(c){
+      var nm=LV.name.replace(/\s+/g,' ').trim(),ph=LV.phone.trim(),em=LV.email.trim(),ci=LV.city.replace(/\s+/g,' ').trim();
+      if(nm.replace(/[^A-Za-zÀ-ÿ]/g,'').length<2)return fieldErr(c,'name',LT('eName'));
+      if(!phoneOk(ph))return fieldErr(c,'phone',LT('eWa'));
+      if(em&&!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em))return fieldErr(c,'email',LT('eEmail'));
+      fieldErr(c,null,'');var go=c.querySelector('.cl-go'),lbl=go.innerHTML;go.disabled=true;go.textContent=LT('sending');
+      fetch('/api/aurea/contato',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:CID,lang:lg(),name:nm,phone:ph,email:em,city:ci,profile:LV.pf,source:SRC,consent:true})})
+        .then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok||!j||!j.token)throw j||{};return j})})
+        .then(function(j){
+          var first=nm.split(' ')[0];first=first.charAt(0).toUpperCase()+first.slice(1);
+          LEAD={n:first.slice(0,40),lid:CID,t:j.token,p:LV.pf||''};sset('localStorage','ca-lead',JSON.stringify(LEAD));sset('sessionStorage','ca-lead-no',null);
+          LSTATE=null;c.remove();var g=log.querySelector('.conc-bot p');if(g&&g.parentNode===log.firstElementChild)g.textContent=hiText();
+          var p=PEND;PEND=null;bubble('bot','<p>'+esc(LT(LVAR==='foto'&&!(p&&p.q)?'thanksF':'thanks').replace('{n}',LEAD.n))+'</p>');
+          lockEl.hidden=true;showForm(true);
+          if(p){if(p.img){PIMG=p.img;showAtt()}ask(p.q||'')}
+          else if(LVAR==='foto'){try{fileIn.click()}catch(e){}}
+          else box.focus()})
+        .catch(function(j){go.disabled=false;go.innerHTML=lbl;
+          if(j&&j.field==='phone')fieldErr(c,'phone',LT('eWa'));else if(j&&j.field==='name')fieldErr(c,'name',LT('eName'));else if(j&&j.field==='email')fieldErr(c,'email',LT('eEmail'));
+          else fieldErr(c,null,LT('eSave'))})}
+    log.addEventListener('input',function(e){var i=e.target;if(!i.closest||!i.closest('.conc-lead'))return;
+      if(i.name==='phone'){var del=/^delete/.test(e.inputType||''),v=maskPhone(i.value,del);if(v!==i.value)i.value=v}
+      if(i.name in LV)LV[i.name]=i.value;if(i.getAttribute('aria-invalid')){i.removeAttribute('aria-invalid');var er=i.closest('.conc-lead').querySelector('.cl-err');if(er)er.textContent=''}});
+    log.addEventListener('click',function(e){var c=e.target.closest&&e.target.closest('.conc-lead');if(!c)return;
+      var b=e.target.closest('[data-pf]');if(b){var k=b.getAttribute('data-pf');LV.pf=LV.pf===k?'':k;[].forEach.call(c.querySelectorAll('[data-pf]'),function(x){x.setAttribute('aria-pressed',String(x.getAttribute('data-pf')===LV.pf))});return}
+      if(e.target.closest('.cl-no'))decline()});
+    log.addEventListener('submit',function(e){var c=e.target.closest&&e.target.closest('.conc-lead');if(!c)return;e.preventDefault();e.stopPropagation();submitLead(c)});
+    lockEl.addEventListener('click',function(e){if(e.target.closest('.conc-lock-re'))showLead(LVAR)});
+
+"""
+s = replace_once(s,
+    "    /* ---- motor local (sem IA): respostas de especialista com as mesmas regras ---- */",
+    LEAD_JS + "    /* ---- motor local (sem IA): respostas de especialista com as mesmas regras ---- */",
+    'Áurea: captação de contato')
+# a conversa vai para a IA com o total de mensagens e, para quem deixou contato, o token, o nome e o perfil;
+# a recusa do servidor (sem contato) mostra o cartão em vez de cair no motor local
+s = replace_once(s,
+    "body:JSON.stringify({messages:msgs,lang:(typeof LANG!=='undefined'?LANG:'pt')}),signal:o.signal})",
+    "body:JSON.stringify(apiBody(msgs)),signal:o.signal})",
+    'Áurea: corpo do pedido')
+s = replace_once(s,
+    ".then(function(r){if(!r.ok)throw {code:r.status===503?'capability_disabled':'http_'+r.status};return r.json()})",
+    ".then(function(r){if(r.status===403||r.status===429)return r.json().catch(function(){return {}}).then(function(j){throw {code:j&&j.error==='contato'?'contato':j&&j.error==='teto'?'teto':'http_'+r.status}});"
+    "if(!r.ok)throw {code:r.status===503?'capability_disabled':'http_'+r.status};return r.json()})",
+    'Áurea: recusa do servidor')
+s = replace_once(s,
+    "      q=String(q||'').trim(); if((!q&&!PIMG)||busy)return; box.value=''; sugg.hidden=true;\n",
+    "      q=String(q||'').trim(); if((!q&&!PIMG)||busy)return; box.value=''; sugg.hidden=true;\n"
+    "      if(needLead(!!PIMG)){PEND={q:q,img:PIMG};PIMG=null;showAtt();showLead(PEND.img?'foto':'msg');return}\n"
+    "      if(!LEAD){QN++;sset('sessionStorage','ca-lead-q',String(QN))}\n",
+    'Áurea: contato antes da 4ª mensagem')
+s = replace_once(s,
+    "          var c=e&&e.code;\n",
+    "          var c=e&&e.code;\n"
+    "          if(c==='contato'||c==='teto'){var ub=b.previousElementSibling;b.remove();turns.pop();LOGT.pop();save();setBusy(false);\n"
+    "            if(c==='teto'){bubble('bot',botHTML(LT('teto')));return}\n"
+    "            if(ub&&ub.classList.contains('conc-user'))ub.remove();if(LEAD){LEAD=null;sset('localStorage','ca-lead',null)}\n"
+    "            PEND={q:q,img:pid?PHOTOS[pid]:null};showLead(PEND.img?'foto':'msg');return}\n",
+    'Áurea: recusa sem contato')
+s = replace_once(s,
+    "    cam.addEventListener('click',function(){if(!busy)fileIn.click()});",
+    "    cam.addEventListener('click',function(){if(busy)return;if(needLead(true)){PEND=null;showLead('foto');return}fileIn.click()});",
+    'Áurea: foto pede contato')
+s = replace_once(s,
+    "log.innerHTML='';bubble('bot','<p>'+esc(X().hi)+'</p>');",
+    "log.innerHTML='';bubble('bot','<p>'+esc(hiText())+'</p>');",
+    'Áurea: saudação com o nome')
+s = replace_once(s,
+    "root.querySelector('.conc-wa-top').setAttribute('aria-label',X().wa);",
+    "root.querySelector('.conc-wa-top').setAttribute('aria-label',X().wa);leadUI();",
+    'Áurea: cartão ao redesenhar')
+s = replace_once(s,
+    "if(ctl)ctl.abort();turns=[];PHOTOS={};PIMG=null;showAtt();save();recNew();renderAll()",
+    "if(ctl)ctl.abort();turns=[];PHOTOS={};PIMG=null;PEND=null;showAtt();save();recNew();renderAll()",
+    'Áurea: nova conversa sem pendência')
+s = replace_once(s,
+    "var body=JSON.stringify({id:CID,lang:lg(),turns:LOGT,wa:!!wa});",
+    "var body=JSON.stringify({id:CID,lang:lg(),turns:LOGT,wa:!!wa,source:SRC,n:LOGT.filter(function(t){return t.role==='user'}).length,lead:LEAD?{id:LEAD.lid,t:LEAD.t}:null});",
+    'Áurea: registro com origem')
+LEAD_CSS = (
+    '.conc-form[hidden],.conc-lock[hidden]{display:none}'
+    '.conc-lead{position:relative;flex:none;margin-top:var(--s1);padding:var(--s4) var(--s5);border:1px solid rgb(207 174 130/.3);'
+    'background:linear-gradient(180deg,rgb(207 174 130/.07),rgb(207 174 130/0) 45%);animation:clIn .7s cubic-bezier(.16,1,.3,1) both}'
+    '.conc-lead::before{content:"";position:absolute;left:var(--s5);right:var(--s5);top:-1px;height:1px;background:linear-gradient(90deg,transparent,#cfae82,transparent)}'
+    '.conc-lead-eb{font-size:.625rem;letter-spacing:.26em;text-transform:uppercase;color:#cfae82}'
+    '.conc-lead-h{margin-top:var(--s2);font-family:var(--serif);font-weight:400;font-size:1.4375rem;line-height:1.1;letter-spacing:-.005em;color:#efe8dd}'
+    '.conc-lead-p{margin-top:var(--s2);font-size:.8125rem;line-height:1.55;color:rgb(239 232 221/.66)}'
+    '.conc-lead-f{margin-top:var(--s3);display:grid;gap:.7rem}'
+    '.cl-f{display:block;min-width:0}'
+    '.cl-f span,.cl-who legend{display:block;padding:0;font-size:.625rem;letter-spacing:.18em;text-transform:uppercase;color:rgb(239 232 221/.58)}'
+    '.cl-f span i{font-style:normal;color:#cfae82}'
+    '.cl-f em,.cl-who legend em{font-style:normal;letter-spacing:.04em;text-transform:none;color:rgb(239 232 221/.36);margin-left:.25em}'
+    '.cl-f input{display:block;width:100%;margin-top:.1rem;padding:.4rem 0 .45rem;background:none;border:0;border-bottom:1px solid rgb(239 232 221/.22);border-radius:0;'
+    'color:#efe8dd;font:inherit;font-size:1rem;line-height:1.3;outline:0;transition:border-color .25s}'
+    '.cl-f input:focus{border-bottom-color:#cfae82}.cl-f input::placeholder{color:rgb(239 232 221/.26)}'
+    '.cl-f input[aria-invalid="true"]{border-bottom-color:#e0a898}'
+    '.cl-f input:-webkit-autofill{-webkit-text-fill-color:#efe8dd;-webkit-box-shadow:0 0 0 40px #141c30 inset;caret-color:#efe8dd}'
+    '.cl-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4)}'
+    '.cl-who{border:0;padding:0;margin:var(--s1) 0 0;min-width:0}'
+    '.cl-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.45rem}'
+    '.cl-chips button{padding:.4rem .7rem;border:1px solid rgb(239 232 221/.2);border-radius:999px;font-size:.75rem;line-height:1.2;color:rgb(239 232 221/.8);transition:border-color .25s,color .25s,background .25s}'
+    '.cl-chips button:hover{border-color:rgb(207 174 130/.6);color:#efe8dd}'
+    '.cl-chips button[aria-pressed="true"]{border-color:#cfae82;color:#cfae82;background:rgb(207 174 130/.1)}'
+    '.cl-err{font-size:.75rem;line-height:1.45;color:#e8b8aa}.cl-err:empty{display:none}'
+    '.cl-acts{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s2) var(--s4)}'
+    '.cl-go{display:inline-flex;align-items:center;gap:.65rem;min-height:44px;padding:0 1.15rem;border-radius:999px;background:#efe8dd;color:#14110d;font-size:.8125rem;font-weight:500;letter-spacing:.01em;transition:background .25s}'
+    '.cl-go svg{width:20px;height:8px;transition:transform .45s cubic-bezier(.16,1,.3,1)}.cl-go:hover{background:#fff}.cl-go:hover svg{transform:translateX(3px)}'
+    '.cl-go[disabled]{opacity:.65;pointer-events:none}'
+    '.cl-no{min-height:44px;padding:0 .25rem;font-size:.75rem;color:rgb(239 232 221/.6);text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgb(239 232 221/.25)}'
+    '.cl-no:hover{color:#efe8dd}'
+    '.cl-lgpd{padding-top:var(--s3);border-top:1px solid rgb(239 232 221/.1);font-size:.6875rem;line-height:1.5;color:rgb(239 232 221/.45)}'
+    '.cl-lgpd a{color:rgb(239 232 221/.72);text-decoration:underline;text-underline-offset:2px;text-decoration-color:rgb(239 232 221/.3)}.cl-lgpd a:hover{color:#efe8dd}'
+    '.conc-lock{margin:0 var(--s4);padding:var(--s4) var(--s2) var(--s2);border-top:1px solid rgb(239 232 221/.12);text-align:center}'
+    '.conc-lock p:first-child{font-family:var(--serif);font-style:italic;font-size:1.0625rem;line-height:1.35;color:rgb(239 232 221/.82)}'
+    '.conc-lock-a{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:var(--s2) var(--s4);margin-top:var(--s3)}'
+    '.conc-lock-re{min-height:40px;font-size:.75rem;color:#efe8dd;text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgb(207 174 130/.6)}'
+    '.conc-lock-re:hover{color:#cfae82}'
+    '@keyframes clIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}'
+    '@media(max-width:359px){.cl-row{grid-template-columns:1fr}}'
+    '@media (prefers-reduced-motion:reduce){.conc-lead{animation:none}}'
+)
+s = s.replace('</style>', LEAD_CSS + '</style>', 1)
+
 # 4e. Reunião com Rafa e Camila (21/10/2026) — mudanças visuais autorizadas pelo Gabriel em 21/10/2026.
 #     Mesma linguagem V62 (cores, tipografia, tokens de movimento e componentes existentes); tudo em PT/EN/ES.
 GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJaWVDlm-p2JQR4ca4-4G334k'

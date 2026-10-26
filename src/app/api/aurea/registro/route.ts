@@ -2,15 +2,18 @@ import { unstable_cache } from "next/cache";
 import { extractContact, suggestedSlugs, type Turn } from "@/lib/aurea/lead";
 import { getSiteFeed } from "@/lib/catalog/site-feed";
 import { publicClient } from "@/lib/supabase/public";
+import { UUID, cleanSource, leadSecret, verifyLead } from "@/lib/aurea/gate";
 
 /* Registro das conversas da Áurea para a tela "Leads da Áurea" do painel.
    O site envia a conversa da aba (id gerado no navegador) a cada resposta e quando a pessoa
-   clica para falar no WhatsApp. Gravação pela função aurea_log (o visitante não lê nada). */
+   clica para falar no WhatsApp. Gravação pela função aurea_log (o visitante não lê nada).
+   Também leva a origem da visita (UTM, referência, página de entrada, dispositivo), quantas mensagens
+   a pessoa escreveu e, para quem já deixou contato numa visita anterior, a ligação com aquele contato
+   (só com token válido). */
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_PER_WINDOW = 80;
 const hits = new Map<string, { n: number; t: number }>();
@@ -34,7 +37,7 @@ const ok = () => new Response(null, { status: 204 });
 export async function POST(req: Request) {
   const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "anon";
   if (limited(ip)) return ok();
-  let body: { id?: unknown; lang?: unknown; turns?: unknown; wa?: unknown };
+  let body: { id?: unknown; lang?: unknown; turns?: unknown; wa?: unknown; source?: unknown; n?: unknown; lead?: { id?: unknown; t?: unknown } };
   try {
     const raw = await req.text();
     if (raw.length > 250_000) return ok();
@@ -58,10 +61,15 @@ export async function POST(req: Request) {
   const pieces = suggestedSlugs(turns).map((s) => names[s] ?? s).slice(0, 20);
   const lang = body.lang === "en" || body.lang === "es" ? body.lang : "pt";
 
-  const { error } = await db.rpc("aurea_log", {
+  const base = {
     p_id: id, p_lang: lang, p_turns: turns, p_wa: body.wa === true,
     p_first: c.first, p_name: c.name, p_phone: c.phone, p_email: c.email, p_pieces: pieces,
-  });
+  };
+  const lead = verifyLead(body.lead?.id, body.lead?.t, leadSecret()) ? String(body.lead?.id).toLowerCase() : null;
+  const userCount = Math.max(turns.filter((t) => t.role === "user").length, Math.min(10_000, Math.floor(Number(body.n) || 0)));
+  let { error } = await db.rpc("aurea_log", { ...base, p_source: cleanSource(body.source), p_lead: lead, p_user_count: userCount });
+  // migração 0010 ainda não aplicada: grava pela assinatura antiga
+  if (error && /aurea_log|function|PGRST202/i.test(`${error.code} ${error.message}`)) ({ error } = await db.rpc("aurea_log", base));
   if (error) console.error("aurea: registro da conversa falhou", error.message);
   return ok();
 }

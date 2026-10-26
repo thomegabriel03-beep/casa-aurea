@@ -2,10 +2,14 @@ import { unstable_cache } from "next/cache";
 import { AUREA_KB } from "@/lib/aurea-kb";
 import { aureaLines, getSiteFeed } from "@/lib/catalog/site-feed";
 import { aureaSystemPrompt } from "@/lib/aurea/prompt";
+import { firstName, gate, leadSecret, verifyLead } from "@/lib/aurea/gate";
 
 /* Áurea — concierge de IA da Casa Áurea.
    O navegador envia só a conversa; o conhecimento do site e a chave ficam no servidor.
-   Sem ANTHROPIC_API_KEY (ou com erro), responde 503 e o site usa o motor local de respostas. */
+   Sem ANTHROPIC_API_KEY (ou com erro), responde 503 e o site usa o motor local de respostas.
+   Captação de contato (regra do servidor, não só do navegador): sem token de lead, só 3 mensagens do
+   visitante e nenhuma foto (403 {error:"contato"}: o site mostra o cartão de contato); com token,
+   até 60 mensagens por conversa (429 {error:"teto"}). */
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,17 +23,24 @@ const IMAGE_URL = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/;
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_PER_WINDOW = 30;
 
+// sem contato: freio extra por IP (quem abre conversas novas para não deixar contato)
+const FREE_WINDOW_MS = 60 * 60 * 1000;
+const FREE_PER_WINDOW = 15;
+
 const hits = new Map<string, { n: number; t: number }>();
-function limited(ip: string): boolean {
+const freeHits = new Map<string, { n: number; t: number }>();
+function bump(map: Map<string, { n: number; t: number }>, ip: string, windowMs: number, max: number): boolean {
   const now = Date.now();
-  const h = hits.get(ip);
-  if (!h || now - h.t > WINDOW_MS) {
-    hits.set(ip, { n: 1, t: now });
+  const h = map.get(ip);
+  if (!h || now - h.t > windowMs) {
+    if (map.size > 5000) map.clear();
+    map.set(ip, { n: 1, t: now });
     return false;
   }
   h.n += 1;
-  return h.n > MAX_PER_WINDOW;
+  return h.n > max;
 }
+const limited = (ip: string) => bump(hits, ip, WINDOW_MS, MAX_PER_WINDOW);
 
 /* peças publicadas no painel: a Áurea também as conhece (lista atualizada a cada 5 minutos) */
 const dbPieces = unstable_cache(
@@ -87,20 +98,39 @@ const toApi = (t: Turn) =>
     ? { role: t.role, content: [{ type: "image", source: { type: "base64", media_type: t.image.media_type, data: t.image.data } }, { type: "text", text: t.content }] }
     : { role: t.role, content: t.content };
 
-export async function POST(req: Request) {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return Response.json({ error: "indisponivel" }, { status: 503 });
+const PROFILE_TXT: Record<string, string> = {
+  cliente: "cliente final",
+  arquiteto: "arquiteto(a) ou designer de interiores (profissional que especifica peças para projetos)",
+  empresa: "empresa ou construtora",
+};
 
+type Body = { messages?: unknown; n?: unknown; lead?: { id?: unknown; t?: unknown }; who?: { name?: unknown; profile?: unknown } };
+
+export async function POST(req: Request) {
   const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "anon";
   if (limited(ip)) return Response.json({ error: "limite" }, { status: 429 });
 
-  let body: unknown;
+  let body: Body;
   try {
-    body = await req.json();
+    body = (await req.json()) as Body;
   } catch {
     return Response.json({ error: "invalido" }, { status: 400 });
   }
-  const turns = clean((body as { messages?: unknown })?.messages);
+  const raw = Array.isArray(body?.messages) ? (body.messages as { role?: unknown; image?: unknown }[]) : [];
+  // contagem antes de qualquer corte: o navegador envia só as últimas mensagens e informa o total
+  const sentUser = raw.filter((m) => m && m.role === "user").length;
+  const userMessages = Math.max(sentUser, Math.min(10_000, Math.floor(Number(body?.n) || 0)));
+  const hasImage = raw.some((m) => m && m.role === "user" && typeof m.image === "string" && m.image.length > 0);
+  const lead = verifyLead(body?.lead?.id, body?.lead?.t, leadSecret());
+  const g = gate({ userMessages, hasImage, lead });
+  if (g === "contato") return Response.json({ error: "contato" }, { status: 403 });
+  if (g === "teto") return Response.json({ error: "teto" }, { status: 429 });
+  if (!lead && bump(freeHits, ip, FREE_WINDOW_MS, FREE_PER_WINDOW)) return Response.json({ error: "contato" }, { status: 403 });
+
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return Response.json({ error: "indisponivel" }, { status: 503 });
+
+  const turns = clean(body?.messages);
   if (!turns) return Response.json({ error: "invalido" }, { status: 400 });
 
   let db = { lines: "", linked: false };
@@ -118,6 +148,16 @@ export async function POST(req: Request) {
       cache_control: { type: "ephemeral" }, // lista grande de peças: lida do cache entre mensagens
       text: (db.linked ? "# PEÇAS PUBLICADAS NO SITE (continuação da lista acima; mesmas regras)\n" : "# MAIS PEÇAS DO SITE (publicadas pela equipe; mesmas regras da lista acima)\n") + db.lines,
     });
+  // quem já deixou contato: primeiro nome e perfil (sem cache: muda por visitante)
+  if (lead) {
+    const nm = firstName(body?.who?.name);
+    const pf = PROFILE_TXT[String(body?.who?.profile ?? "")];
+    const bits = [nm && `Primeiro nome: ${nm}.`, pf && `Perfil: ${pf}.`].filter(Boolean);
+    system.push({
+      type: "text",
+      text: `# VISITANTE\nO visitante já deixou nome e WhatsApp para a equipe (não peça o contato de novo). ${bits.join(" ")}`.trim(),
+    });
+  }
 
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
