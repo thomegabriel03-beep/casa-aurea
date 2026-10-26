@@ -294,21 +294,39 @@ HERO_CSS = (
     '@media (prefers-reduced-motion:reduce){.post-alt,.post.is-alt .post-alt{transition:none}.post-alt .post-alt-img img{transform:none;transition:none}}'
 )
 
-# 4e-2. Áurea: convite discreto alguns segundos depois da entrada (depois do filme), uma vez por sessão
+# 4e-2. Áurea: convite de boas-vindas (autorizado pelo Gabriel em 21/10 e ampliado em 26/10).
+#   Alguns segundos depois do filme, a Áurea entra no centro da tela com caminhos para guiar a visita.
+#   Uma vez por sessão; não aparece se a conversa já foi aberta. No celular, vira uma folha que sobe de baixo.
+ARR = '<svg aria-hidden="true"><use href="#arrow"/></svg>'
 s = replace_once(s,
     '<div class="float" id="float" inert>',
-    '<aside class="aurea-hi" id="aureaHi" aria-label="Convite da Áurea" hidden>'
-    '<button type="button" class="aurea-hi-open" data-conc><span class="conc-av"><svg aria-hidden="true"><use href="#mark"/></svg></span>'
-    '<span class="aurea-hi-t"><b>Olá, sou a Áurea.</b> Posso ajudar a encontrar a peça certa para o seu espaço?</span></button>'
-    f'<button type="button" class="aurea-hi-x" aria-label="Fechar">{XICON}</button></aside>\n'
+    '<div class="aurea-hi" id="aureaHi" role="dialog" aria-modal="true" aria-labelledby="aureaHiT" aria-label="Convite da Áurea" hidden>'
+    '<div class="aurea-hi-bg" data-hi-close></div>'
+    '<div class="aurea-hi-card">'
+    f'<button type="button" class="aurea-hi-x" data-hi-close aria-label="Fechar">{XICON}</button>'
+    '<div class="aurea-hi-head"><span class="conc-av"><svg aria-hidden="true"><use href="#mark"/></svg></span>'
+    '<p class="aurea-hi-eb">Concierge Casa Áurea</p></div>'
+    '<h2 class="aurea-hi-h" id="aureaHiT">Olá, sou a <em>Áurea</em>.</h2>'
+    '<p class="aurea-hi-p">Estou aqui para guiar a sua visita: indico peças para o seu ambiente, analiso uma foto do seu espaço e mostro o melhor do nosso acervo.</p>'
+    '<p class="aurea-hi-q">Por onde quer começar?</p>'
+    '<ul class="aurea-hi-ops">'
+    f'<li><button type="button" data-hi="peca"><span><b>Encontrar a peça certa</b><i>Conte o ambiente e eu indico as opções</i></span>{ARR}</button></li>'
+    f'<li><button type="button" data-hi="foto"><span><b>Enviar uma foto do meu espaço</b><i>Eu olho o ambiente e sugiro o que combina</i></span>{ARR}</button></li>'
+    f'<li><button type="button" data-hi="natal"><span><b>Conhecer a Coleção de Natal</b><i>Árvores, guirlandas e ambientação</i></span>{ARR}</button></li>'
+    f'<li><button type="button" data-hi="acervo"><span><b>Ver todo o acervo</b><i>Peças com filtros por tipo, material e cor</i></span>{ARR}</button></li>'
+    '</ul>'
+    '<button type="button" class="aurea-hi-skip" data-hi-close>Prefiro explorar sozinho</button>'
+    '</div></div>\n'
     '<div class="float" id="float" inert>',
     'Áurea: convite')
-HI_JS = r'''<script>
-/* Convite da Áurea: 8 s depois da entrada e só com o botão da Áurea à vista (filme concluído ou pulado).
+HI_JS = r"""<script>
+/* Convite da Áurea: 7 s depois da entrada e só com o botão da Áurea à vista (filme concluído ou pulado).
    Uma vez por sessão; não aparece se a conversa já foi aberta. */
 (function(){
   var hi=document.getElementById('aureaHi'); if(!hi)return;
-  var KEY='ca-aurea-hi',t0=Date.now(),done=false,since=0,timer=null,root=document.documentElement;
+  var KEY='ca-aurea-hi',t0=Date.now(),done=false,since=0,timer=null,root=document.documentElement,prev=null;
+  var ASK={pt:'Quero ajuda para encontrar a peça certa para o meu ambiente.',en:'I would like help finding the right piece for my space.',es:'Quiero ayuda para encontrar la pieza ideal para mi ambiente.'};
+  function lang(){var l=(document.documentElement.lang||'pt').slice(0,2);return l==='en'||l==='es'?l:'pt'}
   function get(k){try{return sessionStorage.getItem(k)}catch(e){return null}}
   function mark(){try{sessionStorage.setItem(KEY,'1')}catch(e){}}
   function used(){if(get(KEY))return true;try{var c=JSON.parse(get('ca-conc')||'[]');if(c&&c.length)return true}catch(e){}return root.classList.contains('conc-on')}
@@ -316,35 +334,65 @@ HI_JS = r'''<script>
   var fl=document.getElementById('float'),mb=document.getElementById('mbar');
   function ready(){var b=matchMedia('(max-width:767px)').matches?mb:fl;
     return !!b&&b.classList.contains('on')&&!document.querySelector('dialog[open]')&&!document.body.classList.contains('menu-open')&&!root.classList.contains('conc-on')}
-  function hide(){if(hi.hidden)return;hi.classList.remove('on');setTimeout(function(){hi.hidden=true},650)}
-  function show(){done=true;mark();hi.hidden=false;requestAnimationFrame(function(){requestAnimationFrame(function(){hi.classList.add('on')})});
-    var y0=scrollY,mob=matchMedia('(max-width:767px)').matches;setTimeout(hide,mob?11000:16000);
-    /* no celular o convite não fica sobre a leitura: some quando a pessoa continua rolando */
-    addEventListener('scroll',function sc(){if(Math.abs(scrollY-y0)>(mob?140:420)){hide();removeEventListener('scroll',sc)}},{passive:true})}
+  function hide(){if(hi.hidden)return;hi.classList.remove('on');root.classList.remove('hi-on');setTimeout(function(){hi.hidden=true},700);
+    if(prev&&prev.focus&&document.activeElement&&hi.contains(document.activeElement))try{prev.focus({preventScroll:true})}catch(e){}}
+  function show(){done=true;mark();prev=document.activeElement;hi.hidden=false;root.classList.add('hi-on');
+    requestAnimationFrame(function(){requestAnimationFrame(function(){hi.classList.add('on');var f=hi.querySelector('[data-hi]');if(f&&!matchMedia('(pointer:coarse)').matches)try{f.focus({preventScroll:true})}catch(e){}})})}
   function check(){if(done)return;if(used()){done=true;return}
-    if(Date.now()-t0<8000||!ready()){since=0;return} if(!since)since=Date.now(); if(Date.now()-since>=1200)show()}
+    if(Date.now()-t0<7000||!ready()){since=0;return} if(!since)since=Date.now(); if(Date.now()-since>=1200)show()}
   timer=setInterval(function(){check();if(done)clearInterval(timer)},400);
-  hi.querySelector('.aurea-hi-x').addEventListener('click',function(e){e.stopPropagation();hide()});
+  hi.addEventListener('click',function(e){
+    if(e.target.closest('[data-hi-close]')){hide();return}
+    var b=e.target.closest('[data-hi]');if(!b)return;var k=b.getAttribute('data-hi'),C=window.__conc;hide();
+    if(k==='natal'){location.hash='#/colecoes/natal';return}
+    if(k==='acervo'){location.hash='#/acervo';return}
+    if(!C)return;C.open();
+    setTimeout(function(){
+      if(k==='peca')C.ask(ASK[lang()]||ASK.pt);
+      else{var cam=document.querySelector('#conc .conc-cam');if(cam)cam.click()}
+    },k==='foto'?320:120);
+  });
   document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('[data-conc]')){mark();done=true;hide()}});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape')hide()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')hide();
+    if(e.key==='Tab'&&hi.classList.contains('on')){var f=[].slice.call(hi.querySelectorAll('button')).filter(function(x){return x.offsetParent});if(!f.length)return;
+      var a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}});
 })();
 </script>
-'''
+"""
 s = replace_once(s, '</body>', HI_JS + '</body>', 'Áurea: script do convite')
 HI_CSS = (
-    '.aurea-hi{position:fixed;z-index:21;right:var(--gutter);bottom:calc(env(safe-area-inset-bottom,0px) + var(--s5) + 3.75rem);width:min(340px,calc(100vw - 2*var(--gutter)));'
-    'display:flex;align-items:flex-start;background:#0f1628;color:#efe8dd;border:1px solid rgb(239 232 221/.14);border-radius:18px 18px 4px 18px;'
-    'box-shadow:0 18px 44px -18px rgb(8 10 20/.75);opacity:0;transform:translateY(10px);transition:opacity .6s var(--ease-nav),transform .6s var(--ease-editorial)}'
-    '.aurea-hi.on{opacity:1;transform:none}.aurea-hi[hidden]{display:none}'
-    '.aurea-hi-open{flex:1;min-width:0;display:flex;align-items:flex-start;gap:var(--s3);text-align:left;padding:var(--s4) 0 var(--s4) var(--s4);font-size:.875rem;line-height:1.5;color:rgb(239 232 221/.82)}'
-    '.aurea-hi-open .conc-av{width:34px;height:34px}.aurea-hi-open .conc-av svg{width:13px;height:17px}'
-    '.aurea-hi-t b{display:block;font-family:var(--serif);font-weight:400;font-size:1.1875rem;line-height:1.2;color:#efe8dd;margin-bottom:3px}'
-    '.aurea-hi-open:hover .aurea-hi-t b{color:#cfae82}'
-    '.aurea-hi-x{flex:none;width:40px;height:40px;margin:4px 4px 0 0;display:grid;place-items:center;border-radius:50%;color:rgb(239 232 221/.6)}'
-    '.aurea-hi-x:hover,.aurea-hi-x:focus-visible{background:rgb(239 232 221/.08);color:#fff}.aurea-hi-x svg{width:16px;height:16px}'
-    'html.conc-on .aurea-hi{display:none}'
-    '@media(max-width:767px){.aurea-hi{right:12px;width:min(300px,calc(100vw - 24px));bottom:calc(env(safe-area-inset-bottom,0px) + 4.75rem)}.aurea-hi-open{font-size:.8125rem}.aurea-hi-t b{font-size:1.0625rem}}'
-    '@media (prefers-reduced-motion:reduce){.aurea-hi{transition:none;transform:none}}'
+    '.aurea-hi{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:var(--gutter)}.aurea-hi[hidden]{display:none}'
+    '.aurea-hi-bg{position:absolute;inset:0;background:rgb(8 11 22/.58);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;transition:opacity .7s var(--ease-nav)}'
+    '.aurea-hi.on .aurea-hi-bg{opacity:1}'
+    '.aurea-hi-card{position:relative;width:min(560px,100%);max-height:calc(100dvh - 2*var(--gutter));overflow:auto;background:#0f1628;color:#efe8dd;'
+    'border:1px solid rgb(207 174 130/.28);border-radius:4px;padding:clamp(2rem,4vw,3rem) clamp(1.5rem,4vw,3rem) clamp(1.5rem,3vw,2.25rem);'
+    'box-shadow:0 40px 120px -30px rgb(0 0 0/.8);opacity:0;transform:translateY(24px) scale(.985);transition:opacity .8s var(--ease-nav),transform .9s var(--ease-editorial)}'
+    '.aurea-hi.on .aurea-hi-card{opacity:1;transform:none}'
+    '.aurea-hi-card::before{content:"";position:absolute;left:clamp(1.5rem,4vw,3rem);right:clamp(1.5rem,4vw,3rem);top:0;height:1px;background:linear-gradient(90deg,transparent,#cfae82,transparent);opacity:.7}'
+    '.aurea-hi-x{position:absolute;top:10px;right:10px;width:44px;height:44px;display:grid;place-items:center;border-radius:50%;color:rgb(239 232 221/.6)}'
+    '.aurea-hi-x:hover,.aurea-hi-x:focus-visible{background:rgb(239 232 221/.08);color:#fff}.aurea-hi-x svg{width:18px;height:18px}'
+    '.aurea-hi-head{display:flex;align-items:center;gap:var(--s3)}.aurea-hi-head .conc-av{width:44px;height:44px}.aurea-hi-head .conc-av svg{width:16px;height:21px}'
+    '.aurea-hi-eb{margin:0;font-size:.6875rem;letter-spacing:.28em;text-transform:uppercase;color:#cfae82}'
+    '.aurea-hi-h{margin:var(--s5) 0 0;font-family:var(--serif);font-weight:400;font-size:clamp(2rem,5vw,2.75rem);line-height:1.05;letter-spacing:-.01em;color:#efe8dd}'
+    '.aurea-hi-h em{font-style:italic;color:#cfae82}'
+    '.aurea-hi-p{margin:var(--s4) 0 0;font-size:.9375rem;line-height:1.65;color:rgb(239 232 221/.74);max-width:34em}'
+    '.aurea-hi-q{margin:var(--s6) 0 var(--s2);font-size:.6875rem;letter-spacing:.24em;text-transform:uppercase;color:rgb(239 232 221/.55)}'
+    '.aurea-hi-ops{list-style:none;margin:0;padding:0;border-top:1px solid rgb(239 232 221/.12)}'
+    '.aurea-hi-ops li{border-bottom:1px solid rgb(239 232 221/.12)}'
+    '.aurea-hi-ops button{width:100%;display:flex;align-items:center;gap:var(--s4);padding:1rem .25rem;text-align:left;color:#efe8dd;transition:padding .45s var(--ease-editorial),color .3s}'
+    '.aurea-hi-ops button span{flex:1;min-width:0}'
+    '.aurea-hi-ops b{display:block;font-family:var(--serif);font-weight:400;font-size:1.25rem;line-height:1.25}'
+    '.aurea-hi-ops i{display:block;font-style:normal;font-size:.8125rem;color:rgb(239 232 221/.55);margin-top:2px}'
+    '.aurea-hi-ops svg{width:22px;height:12px;flex:none;color:#cfae82;transition:transform .45s var(--ease-editorial)}'
+    '.aurea-hi-ops button:hover,.aurea-hi-ops button:focus-visible{padding-left:.75rem}.aurea-hi-ops button:hover b,.aurea-hi-ops button:focus-visible b{color:#cfae82}'
+    '.aurea-hi-ops button:hover svg,.aurea-hi-ops button:focus-visible svg{transform:translateX(4px)}'
+    '.aurea-hi-skip{display:block;margin:var(--s5) auto 0;padding:.5rem;font-size:.8125rem;color:rgb(239 232 221/.6);text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgb(239 232 221/.25)}'
+    '.aurea-hi-skip:hover{color:#efe8dd}'
+    'html.conc-on .aurea-hi{display:none}html.hi-on{overflow:hidden}'
+    '@media(max-width:767px){.aurea-hi{place-items:end stretch;padding:0}'
+    '.aurea-hi-card{width:100%;max-height:92dvh;border-radius:18px 18px 0 0;border-bottom:0;padding:2rem 1.375rem calc(1.25rem + env(safe-area-inset-bottom,0px));transform:translateY(100%)}'
+    '.aurea-hi-ops b{font-size:1.125rem}.aurea-hi-ops button{padding:.85rem .25rem}.aurea-hi-p{font-size:.875rem}}'
+    '@media (prefers-reduced-motion:reduce){.aurea-hi-card,.aurea-hi-bg{transition:none}.aurea-hi-card{transform:none}}'
 )
 
 # 4e-3. cortinas e persianas: ateliê próprio (home, entre "Solução completa" e "Matéria") e na Curadoria
@@ -430,9 +478,21 @@ I18N_NEW_D = {
     'Abertura': ['Opening', 'Portada'],
     'Coleção de Natal': ['Christmas Collection', 'Colección de Navidad'],
     'Convite da Áurea': ['Invitation from Áurea', 'Invitación de Áurea'],
-    'Olá, sou a Áurea.': ["Hello, I'm Áurea.", 'Hola, soy Áurea.'],
-    'Posso ajudar a encontrar a peça certa para o seu espaço?':
-        ['Can I help you find the right piece for your space?', '¿Te ayudo a encontrar la pieza ideal para tu espacio?'],
+    'Concierge Casa Áurea': ['Casa Áurea Concierge', 'Concierge Casa Áurea'],
+    'Olá, sou a': ["Hello, I'm ", 'Hola, soy '],
+    'Estou aqui para guiar a sua visita: indico peças para o seu ambiente, analiso uma foto do seu espaço e mostro o melhor do nosso acervo.':
+        ["I'm here to guide your visit: I suggest pieces for your space, look at a photo of your room and show you the best of our collection.",
+         'Estoy aquí para guiar tu visita: te indico piezas para tu ambiente, analizo una foto de tu espacio y te muestro lo mejor de nuestro acervo.'],
+    'Por onde quer começar?': ['Where would you like to start?', '¿Por dónde quieres empezar?'],
+    'Encontrar a peça certa': ['Find the right piece', 'Encontrar la pieza ideal'],
+    'Conte o ambiente e eu indico as opções': ['Tell me about the room and I will suggest options', 'Cuéntame el ambiente y te indico opciones'],
+    'Enviar uma foto do meu espaço': ['Send a photo of my space', 'Enviar una foto de mi espacio'],
+    'Eu olho o ambiente e sugiro o que combina': ['I look at the room and suggest what fits', 'Miro el ambiente y sugiero lo que combina'],
+    'Conhecer a Coleção de Natal': ['Discover the Christmas Collection', 'Conocer la Colección de Navidad'],
+    'Árvores, guirlandas e ambientação': ['Trees, wreaths and seasonal styling', 'Árboles, guirnaldas y ambientación'],
+    'Ver todo o acervo': ['See the full collection', 'Ver todo el acervo'],
+    'Peças com filtros por tipo, material e cor': ['Pieces filtered by type, material and colour', 'Piezas con filtros por tipo, material y color'],
+    'Prefiro explorar sozinho': ["I'd rather explore on my own", 'Prefiero explorar por mi cuenta'],
     'Cortinas e persianas · Ateliê próprio': ['Curtains and blinds · Our own workshop', 'Cortinas y persianas · Taller propio'],
     'A luz da casa, feita sob medida.': ["Your home's light, made to measure.", 'La luz de tu casa, hecha a medida.'],
     'Há mais de 20 anos, nosso ateliê desenha e confecciona cortinas e persianas para cada janela: tecidos, forros e blackout, persianas manuais ou motorizadas, com medição e instalação pela nossa equipe.':
