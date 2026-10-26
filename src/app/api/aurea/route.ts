@@ -3,6 +3,7 @@ import { AUREA_KB } from "@/lib/aurea-kb";
 import { aureaLines, getSiteFeed } from "@/lib/catalog/site-feed";
 import { aureaSystemPrompt } from "@/lib/aurea/prompt";
 import { firstName, gate, leadSecret, verifyLead } from "@/lib/aurea/gate";
+import { MAX_STRIKES, STRIKE_WINDOW_MS, blockedReason, refusal, stripFora } from "@/lib/aurea/escopo";
 
 /* Áurea — concierge de IA da Casa Áurea.
    O navegador envia só a conversa; o conhecimento do site e a chave ficam no servidor.
@@ -41,6 +42,14 @@ function bump(map: Map<string, { n: number; t: number }>, ip: string, windowMs: 
   return h.n > max;
 }
 const limited = (ip: string) => bump(hits, ip, WINDOW_MS, MAX_PER_WINDOW);
+
+// travas de assunto: recusas por visitante (IP) na última hora
+const strikes = new Map<string, { n: number; t: number }>();
+function struck(ip: string): boolean {
+  const h = strikes.get(ip);
+  return !!h && Date.now() - h.t <= STRIKE_WINDOW_MS && h.n >= MAX_STRIKES;
+}
+const strike = (ip: string) => { bump(strikes, ip, STRIKE_WINDOW_MS, MAX_STRIKES); };
 
 /* peças publicadas no painel: a Áurea também as conhece (lista atualizada a cada 5 minutos) */
 const dbPieces = unstable_cache(
@@ -104,7 +113,7 @@ const PROFILE_TXT: Record<string, string> = {
   empresa: "empresa ou construtora",
 };
 
-type Body = { messages?: unknown; n?: unknown; lead?: { id?: unknown; t?: unknown }; who?: { name?: unknown; profile?: unknown } };
+type Body = { lang?: unknown; messages?: unknown; n?: unknown; lead?: { id?: unknown; t?: unknown }; who?: { name?: unknown; profile?: unknown } };
 
 export async function POST(req: Request) {
   const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "anon";
@@ -132,6 +141,14 @@ export async function POST(req: Request) {
 
   const turns = clean(body?.messages);
   if (!turns) return Response.json({ error: "invalido" }, { status: 400 });
+
+  // travas de assunto: quem insiste em usar a Áurea para outra coisa deixa de usar a IA por uma hora
+  if (struck(ip)) return Response.json({ error: "escopo" }, { status: 429 });
+  const last = [...turns].reverse().find((t) => t.role === "user");
+  if (last && blockedReason(last.content)) {
+    strike(ip);
+    return Response.json({ text: refusal(body?.lang) });
+  }
 
   let db = { lines: "", linked: false };
   try {
@@ -182,7 +199,10 @@ export async function POST(req: Request) {
       .join("")
       .trim();
     if (!text) return Response.json({ error: "vazio" }, { status: 503 });
-    return Response.json({ text });
+    const out = stripFora(text);
+    if (out.fora) strike(ip);
+    if (!out.text) return Response.json({ text: refusal(body?.lang) });
+    return Response.json({ text: out.text });
   } catch {
     return Response.json({ error: "ia" }, { status: 503 });
   }
