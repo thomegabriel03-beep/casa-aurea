@@ -4,6 +4,7 @@ import { aureaLines, getSiteFeed } from "@/lib/catalog/site-feed";
 import { aureaSystemPrompt } from "@/lib/aurea/prompt";
 import { firstName, gate, leadSecret, verifyLead } from "@/lib/aurea/gate";
 import { MAX_STRIKES, STRIKE_WINDOW_MS, blockedReason, refusal, stripFora } from "@/lib/aurea/escopo";
+import { siteSuspenso } from "@/lib/suspensao";
 
 /* Áurea — concierge de IA da Casa Áurea.
    O navegador envia só a conversa; o conhecimento do site e a chave ficam no servidor.
@@ -116,6 +117,7 @@ const PROFILE_TXT: Record<string, string> = {
 type Body = { lang?: unknown; messages?: unknown; n?: unknown; lead?: { id?: unknown; t?: unknown }; who?: { name?: unknown; profile?: unknown } };
 
 export async function POST(req: Request) {
+  if (siteSuspenso()) return Response.json({ error: "indisponivel" }, { status: 503 });
   const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "anon";
   if (limited(ip)) return Response.json({ error: "limite" }, { status: 429 });
 

@@ -3,6 +3,7 @@ import { extractContact, suggestedSlugs, type Turn } from "@/lib/aurea/lead";
 import { getSiteFeed } from "@/lib/catalog/site-feed";
 import { publicClient } from "@/lib/supabase/public";
 import { UUID, cleanSource, leadSecret, verifyLead } from "@/lib/aurea/gate";
+import { siteSuspenso } from "@/lib/suspensao";
 
 /* Registro das conversas da Áurea para a tela "Leads da Áurea" do painel.
    O site envia a conversa da aba (id gerado no navegador) a cada resposta e quando a pessoa
@@ -35,6 +36,7 @@ const pieceNames = unstable_cache(
 const ok = () => new Response(null, { status: 204 });
 
 export async function POST(req: Request) {
+  if (siteSuspenso()) return Response.json({ error: "indisponivel" }, { status: 503 });
   const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "anon";
   if (limited(ip)) return ok();
   let body: { id?: unknown; lang?: unknown; turns?: unknown; wa?: unknown; source?: unknown; n?: unknown; lead?: { id?: unknown; t?: unknown } };

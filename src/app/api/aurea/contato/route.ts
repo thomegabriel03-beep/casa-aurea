@@ -1,5 +1,6 @@
 import { UUID, cleanSource, leadSecret, signLead, validateContact } from "@/lib/aurea/gate";
 import { publicClient } from "@/lib/supabase/public";
+import { siteSuspenso } from "@/lib/suspensao";
 
 /* Cartão de contato da Áurea: nome, WhatsApp, e-mail, cidade, perfil e consentimento.
    Grava pela função aurea_contact (o visitante não lê nada) e devolve o token que libera
@@ -24,6 +25,7 @@ function limited(ip: string): boolean {
 }
 
 export async function POST(req: Request) {
+  if (siteSuspenso()) return Response.json({ error: "indisponivel" }, { status: 503 });
   const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "anon";
   if (limited(ip)) return Response.json({ error: "limite" }, { status: 429 });
 
